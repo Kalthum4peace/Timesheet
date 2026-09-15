@@ -16,7 +16,12 @@ Full product requirements: [context/PROJECT_CONTEXT.md](context/PROJECT_CONTEXT.
 
 ## Status
 
-Early build. No real users yet. Architecture review (requirements lock, schema, RLS design) is complete. Initial schema migration ([supabase/migrations/20260915000000_initial_schema.sql](supabase/migrations/20260915000000_initial_schema.sql)) is applied to a personal dev Supabase project — all 8 tables confirmed present. RLS policies and application code not yet started.
+Early build. No real users yet. Schema, RLS policies, and national holiday seed data are all applied to a personal dev Supabase project:
+- Schema: [20260915000000_initial_schema.sql](supabase/migrations/20260915000000_initial_schema.sql) — 8 tables.
+- RLS: [20260915140000_rls_policies.sql](supabase/migrations/20260915140000_rls_policies.sql) + [20260915150000_fix_approval_steps_recursion.sql](supabase/migrations/20260915150000_fix_approval_steps_recursion.sql) (fixes an infinite-recursion bug the first version had). Behaviorally verified with [scripts/test-rls.mjs](scripts/test-rls.mjs) — 16/16 required tests pass (SPM classification rule, self-approval rejection, step-ordering enforcement, timesheet_actions/notifications insert-blocking, admin's enumerated write boundary). Re-run this script after any future RLS change.
+- Seed data: [20260915140100_seed_national_holidays.sql](supabase/migrations/20260915140100_seed_national_holidays.sql) — 16 rows (8 fixed/Easter-derived holidays × 2026-2027). Nigeria's moveable Islamic-calendar holidays (Eid al-Fitr, Eid al-Kabir, Eid al-Mawlid) are deliberately NOT seeded — need manual entry each year once officially announced, do not invent dates.
+
+Application code (Phase 4 workflow engine, UI) not yet started.
 
 ## Standing rules
 
