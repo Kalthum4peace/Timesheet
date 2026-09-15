@@ -23,7 +23,11 @@ Early build. No real users yet. Schema, RLS policies, and national holiday seed 
 
 organizational_assignments append-only discipline is now DB-enforced: [20260915160000_org_assignments_append_only.sql](supabase/migrations/20260915160000_org_assignments_append_only.sql) (`before update` trigger rejecting edits to any row whose `effective_to` is already set). Behaviorally verified with [scripts/test-org-assignments-trigger.mjs](scripts/test-org-assignments-trigger.mjs).
 
-Phase 4 workflow engine (chain-generation, submit, approve, decline, return-acknowledge, resubmit) in progress. UI not started.
+Phase 4 workflow engine in progress:
+- **Chain-generation** (`generate_approval_chain`, [supabase/migrations/20260915220000_scope_org_assignment_check_to_staff.sql](supabase/migrations/20260915220000_scope_org_assignment_check_to_staff.sql) has the current version — see git history for the 5 migrations before it, each fixing a real bug testing caught): builds a new cycle's approval_steps chain per role/department, applies self-approval substitution, sets timesheet status, notifies first-layer approvers. Not exposed to `authenticated` — only callable by submit/resubmit or the service role. 25/25 behavioral tests pass ([scripts/test-chain-generation.mjs](scripts/test-chain-generation.mjs)).
+- Submit, approve, decline, return-acknowledge, resubmit: not yet built.
+
+UI not started.
 
 ## Standing rules
 
