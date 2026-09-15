@@ -1,0 +1,21 @@
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Supabase local dev
+supabase/.branches
+supabase/.temp
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
+.vercel
