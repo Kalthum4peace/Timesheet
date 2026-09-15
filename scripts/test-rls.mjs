@@ -52,9 +52,9 @@ async function signInAs(persona) {
 async function main() {
   console.log('Creating personas...');
   const staff1 = await createPersona('staff1', 'Amina Staff', 'staff');
-  const teamLead1 = await createPersona('teamlead1', 'Tunde TeamLead', 'team_lead');
-  const headOps1 = await createPersona('headops1', 'Chioma HeadOps', 'department_head');
-  const headMedical1 = await createPersona('headmed1', 'Bello HeadMedical', 'department_head');
+  const teamLead1 = await createPersona('teamLead1', 'Tunde TeamLead', 'team_lead');
+  const headOps1 = await createPersona('headOps1', 'Chioma HeadOps', 'department_head');
+  const headMedical1 = await createPersona('headMedical1', 'Bello HeadMedical', 'department_head');
   const spm1 = await createPersona('spm1', 'Grace SPM', 'spm');
   const hr1 = await createPersona('hr1', 'Ibrahim HR', 'hr');
   const admin1 = await createPersona('admin1', 'Yusuf Admin', 'admin');
