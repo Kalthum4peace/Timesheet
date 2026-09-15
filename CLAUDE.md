@@ -16,7 +16,7 @@ Full product requirements: [context/PROJECT_CONTEXT.md](context/PROJECT_CONTEXT.
 
 ## Status
 
-Early build. No real users yet. Architecture review (requirements lock, schema, RLS design) is complete. Currently implementing: initial schema migration (dry run, not yet applied to any database).
+Early build. No real users yet. Architecture review (requirements lock, schema, RLS design) is complete. Initial schema migration ([supabase/migrations/20260915000000_initial_schema.sql](supabase/migrations/20260915000000_initial_schema.sql)) is applied to a personal dev Supabase project — all 8 tables confirmed present. RLS policies and application code not yet started.
 
 ## Standing rules
 
