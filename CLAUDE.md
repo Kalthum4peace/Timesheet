@@ -21,7 +21,9 @@ Early build. No real users yet. Schema, RLS policies, and national holiday seed 
 - RLS: [20260915140000_rls_policies.sql](supabase/migrations/20260915140000_rls_policies.sql) + [20260915150000_fix_approval_steps_recursion.sql](supabase/migrations/20260915150000_fix_approval_steps_recursion.sql) (fixes an infinite-recursion bug the first version had). Behaviorally verified with [scripts/test-rls.mjs](scripts/test-rls.mjs) — 16/16 required tests pass (SPM classification rule, self-approval rejection, step-ordering enforcement, timesheet_actions/notifications insert-blocking, admin's enumerated write boundary). Re-run this script after any future RLS change.
 - Seed data: [20260915140100_seed_national_holidays.sql](supabase/migrations/20260915140100_seed_national_holidays.sql) — 16 rows (8 fixed/Easter-derived holidays × 2026-2027). Nigeria's moveable Islamic-calendar holidays (Eid al-Fitr, Eid al-Kabir, Eid al-Mawlid) are deliberately NOT seeded — need manual entry each year once officially announced, do not invent dates.
 
-Application code (Phase 4 workflow engine, UI) not yet started.
+organizational_assignments append-only discipline is now DB-enforced: [20260915160000_org_assignments_append_only.sql](supabase/migrations/20260915160000_org_assignments_append_only.sql) (`before update` trigger rejecting edits to any row whose `effective_to` is already set). Behaviorally verified with [scripts/test-org-assignments-trigger.mjs](scripts/test-org-assignments-trigger.mjs).
+
+Phase 4 workflow engine (chain-generation, submit, approve, decline, return-acknowledge, resubmit) in progress. UI not started.
 
 ## Standing rules
 
@@ -36,10 +38,6 @@ Application code (Phase 4 workflow engine, UI) not yet started.
 - If something surfaces that's genuinely an OPEN DECISION or a contradiction with PROJECT_CONTEXT.md, stop and report it rather than silently picking an assumption and continuing. Clean, unambiguous implementation work proceeds without round-tripping for approval on every step.
 - No production changes of any kind unless explicitly requested.
 - `.env` for all secrets, no hardcoded values anywhere in source, ever, including "temporarily."
-
-### Known gaps (tracked, not forgotten)
-
-- **organizational_assignments has no DB-level enforcement against editing a closed (historical) row.** RLS currently grants admin broad UPDATE access on this table; the "insert a new row + close out the prior row's effective_to, never update-in-place" discipline is trusted to the app layer only. Before this system holds real data: add a trigger rejecting any UPDATE where the row's existing (pre-update) `effective_to` is already non-null — i.e. a closed row must never be touched again, only new rows inserted. Accepted as an interim state on 2026-09-15, not a closed issue.
 
 ### Portability (this project specifically)
 
