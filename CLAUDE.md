@@ -25,7 +25,10 @@ organizational_assignments append-only discipline is now DB-enforced: [202609151
 
 Phase 4 workflow engine in progress:
 - **Chain-generation** (`generate_approval_chain`, [supabase/migrations/20260915220000_scope_org_assignment_check_to_staff.sql](supabase/migrations/20260915220000_scope_org_assignment_check_to_staff.sql) has the current version — see git history for the 5 migrations before it, each fixing a real bug testing caught): builds a new cycle's approval_steps chain per role/department, applies self-approval substitution, sets timesheet status, notifies first-layer approvers. Not exposed to `authenticated` — only callable by submit/resubmit or the service role. 25/25 behavioral tests pass ([scripts/test-chain-generation.mjs](scripts/test-chain-generation.mjs)).
-- Submit, approve, decline, return-acknowledge, resubmit: not yet built.
+- **Submit** (`submit_timesheet`, [20260915230000_submit_timesheet.sql](supabase/migrations/20260915230000_submit_timesheet.sql)): validates ownership, draft status, and all-days-filled (working default, unconfirmed with SPM — see below), then calls chain-generation. Granted to `authenticated`. 12/12 behavioral tests pass ([scripts/test-submit.mjs](scripts/test-submit.mjs)).
+- Approve, decline, return-acknowledge, resubmit: not yet built.
+
+**Unconfirmed with client, to settle before V1 ships:** whether all calendar days must be filled before submission is allowed. Currently built as the working default (submission is rejected if any day is missing). Alongside the deadline/reminder question already deferred.
 
 UI not started.
 
