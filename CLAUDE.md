@@ -32,6 +32,10 @@ Early build. No real users yet. Architecture review (requirements lock, schema, 
 - No production changes of any kind unless explicitly requested.
 - `.env` for all secrets, no hardcoded values anywhere in source, ever, including "temporarily."
 
+### Known gaps (tracked, not forgotten)
+
+- **organizational_assignments has no DB-level enforcement against editing a closed (historical) row.** RLS currently grants admin broad UPDATE access on this table; the "insert a new row + close out the prior row's effective_to, never update-in-place" discipline is trusted to the app layer only. Before this system holds real data: add a trigger rejecting any UPDATE where the row's existing (pre-update) `effective_to` is already non-null — i.e. a closed row must never be touched again, only new rows inserted. Accepted as an interim state on 2026-09-15, not a closed issue.
+
 ### Portability (this project specifically)
 
 Built in a personal dev environment now; production will belong to Kalthum for Peace on their own Vercel/Supabase accounts. For every implementation decision, ask: would moving this to Kalthum's own production environment later require a code change, or only a configuration change? If the former, reconsider the approach.
