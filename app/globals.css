@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/*
+  Design direction confirmed 2026-09-15 — see CLAUDE.md "Design direction".
+  Accent sampled from Product Logo/kfp-logo.jpg; warm neutrals chosen fresh
+  for this project. Status chip colors are darkened from their first pass
+  to clear WCAG AA 4.5:1 against their tint backgrounds — see CLAUDE.md for
+  the measured ratios, don't re-lighten these without re-checking.
+*/
+:root {
+  --base: #faf6ee;
+  --surface: #fffefb;
+  --surface-2: #f3ecdf;
+  --border: #e7dfd1;
+  --border-strong: #d8cdb9;
+  --text-primary: #2a241d;
+  --text-secondary: #6f6558;
+  --text-muted: #9b927f;
+  --accent: #0270ce;
+  --accent-on-tint: #0268bb;
+  --on-accent: #ffffff;
+  --pending: #875e17;
+  --pending-bg: #fbeeda;
+  --returning: #b24422;
+  --returning-bg: #fbe7de;
+  --approved: #3b723d;
+  --approved-bg: #e7f1e5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --base: #1c1814;
+    --surface: #242019;
+    --surface-2: #2c271e;
+    --border: #3a342a;
+    --border-strong: #4a4335;
+    --text-primary: #f1eae0;
+    --text-secondary: #b7ac98;
+    --text-muted: #867c69;
+    --accent: #4c9fee;
+    --accent-on-tint: #8cc1f5;
+    --on-accent: #0b1622;
+    --pending: #e3b166;
+    --pending-bg: #3a2e17;
+    --returning: #e38a69;
+    --returning-bg: #3d2317;
+    --approved: #8fc195;
+    --approved-bg: #22331f;
+  }
+}
+
+:root[data-theme="dark"] {
+  --base: #1c1814;
+  --surface: #242019;
+  --surface-2: #2c271e;
+  --border: #3a342a;
+  --border-strong: #4a4335;
+  --text-primary: #f1eae0;
+  --text-secondary: #b7ac98;
+  --text-muted: #867c69;
+  --accent: #4c9fee;
+  --accent-on-tint: #8cc1f5;
+  --on-accent: #0b1622;
+  --pending: #e3b166;
+  --pending-bg: #3a2e17;
+  --returning: #e38a69;
+  --returning-bg: #3d2317;
+  --approved: #8fc195;
+  --approved-bg: #22331f;
+}
+
+@theme inline {
+  --color-base: var(--base);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-on-tint: var(--accent-on-tint);
+  --color-on-accent: var(--on-accent);
+  --color-pending: var(--pending);
+  --color-pending-bg: var(--pending-bg);
+  --color-returning: var(--returning);
+  --color-returning-bg: var(--returning-bg);
+  --color-approved: var(--approved);
+  --color-approved-bg: var(--approved-bg);
+  --font-sans: var(--font-work-sans), system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: var(--base);
+  color: var(--text-primary);
+}
