@@ -70,11 +70,28 @@ export function PendingApprovalsList({ userId }: { userId: string }) {
 
       const rows = (steps ?? []) as unknown as RawStep[];
 
+      // A prior cycle's row can still be 'pending' if that cycle was
+      // declined before reaching this approval_type's layer (e.g. declined
+      // at department_head, so the spm/hr rows created for that cycle never
+      // got resolved). Resubmission always starts a new cycle_number with
+      // entirely fresh rows, so the highest cycle_number among this
+      // approver's own pending rows for a timesheet is always the live one
+      // — collapse to that before deciding what's actionable, so a stale
+      // cycle never shows twice.
+      const maxCycleByTimesheet = new Map<string, number>();
+      for (const row of rows) {
+        const current = maxCycleByTimesheet.get(row.timesheet_id) ?? 0;
+        if (row.cycle_number > current) maxCycleByTimesheet.set(row.timesheet_id, row.cycle_number);
+      }
+      const currentCycleRows = rows.filter(
+        (row) => row.cycle_number === maxCycleByTimesheet.get(row.timesheet_id),
+      );
+
       // A row is genuinely actionable now iff the parent timesheet's own
       // status says this approval_type's layer is the currently active one
       // — see APPROVAL_TYPE_ACTIVE_STATUS for why this (not a client-side
       // read of sibling approval_steps rows) is the correct check.
-      const actionable = rows.filter(
+      const actionable = currentCycleRows.filter(
         (row) => row.timesheets && row.timesheets.status === APPROVAL_TYPE_ACTIVE_STATUS[row.approval_type],
       );
 

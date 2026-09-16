@@ -4,6 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const APPROVER_ROLES = ["team_lead", "department_head", "spm", "hr"];
+
+function landingPathForRole(role: string | undefined) {
+  if (role === "admin") return "/admin";
+  if (role && APPROVER_ROLES.includes(role)) return "/approvals";
+  return "/timesheet";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -28,12 +36,13 @@ export default function LoginPage() {
     }
 
     // Admin has no timesheet chain of its own (generate_approval_chain has
-    // no rule for role='admin'), so landing them on /timesheet would just
-    // be a dead end — route by role instead of assuming everyone lands the
-    // same place.
+    // no rule for role='admin'), and approver roles (team_lead/
+    // department_head/spm/hr) have no organizational_assignments row of
+    // their own either, so /timesheet's auto-create dead-ends for them too
+    // — route by role instead of assuming everyone lands the same place.
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
     setSubmitting(false);
-    router.push(profile?.role === "admin" ? "/admin" : "/timesheet");
+    router.push(landingPathForRole(profile?.role));
     router.refresh();
   }
 
