@@ -25,6 +25,11 @@
   --returning-bg: #fbe7de;
   --approved: #3b723d;
   --approved-bg: #e7f1e5;
+  /* Login page's own signature moment — quiet background texture behind
+     the form card only. Kept as a token (not a literal in the component)
+     so light/dark get independently tuned opacity, same pattern as every
+     other themed value here. */
+  --login-bg-opacity: 0.05;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -46,6 +51,7 @@
     --returning-bg: #3d2317;
     --approved: #8fc195;
     --approved-bg: #22331f;
+    --login-bg-opacity: 0.08;
   }
 }
 
@@ -67,6 +73,7 @@
   --returning-bg: #3d2317;
   --approved: #8fc195;
   --approved-bg: #22331f;
+  --login-bg-opacity: 0.08;
 }
 
 @theme inline {

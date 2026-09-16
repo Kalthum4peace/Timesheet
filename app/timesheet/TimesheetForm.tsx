@@ -350,7 +350,9 @@ export function TimesheetForm({ userId }: { userId: string }) {
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{TIMESHEET_STATUS_LABEL[timesheet.status]}</p>
+      <div className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold text-text-primary">
+        {TIMESHEET_STATUS_LABEL[timesheet.status]}
+      </div>
       {timesheet.status === "returning" && returnRecipient !== null && (
         <p className="text-sm text-text-secondary">
           Still on its way back to you — an earlier approver needs to acknowledge it first.

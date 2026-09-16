@@ -7,6 +7,10 @@ import {
   leadingBlanksForMonth,
 } from "@/lib/timesheet";
 
+const STATUS_CODE = Object.fromEntries(
+  STATUS_OPTIONS.map((opt) => [opt.value, opt.code]),
+) as Record<AttendanceStatus, string>;
+
 export function AttendanceGrid({
   year,
   month,
@@ -40,6 +44,9 @@ export function AttendanceGrid({
           return (
             <div key={day} className="flex flex-col items-center gap-1 rounded-lg bg-surface-2 p-1.5">
               <span className="text-xs font-medium text-text-secondary">{day}</span>
+              <span className="text-sm font-bold leading-none text-text-primary" aria-hidden="true">
+                {status ? STATUS_CODE[status] : "–"}
+              </span>
               <select
                 id={`day-${key}`}
                 disabled={!editable}
