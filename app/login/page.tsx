@@ -48,11 +48,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative isolate overflow-hidden rounded-2xl">
+    <div className="relative isolate overflow-hidden rounded-2xl px-4 sm:px-0">
       {/* Second (and only other) signature moment besides the header
           flourish — a quiet, low-opacity texture reserved for this screen,
           the app's other natural bookend. Sits fully behind the opaque
-          form card below, so it never touches the form's own contrast. */}
+          form card below, so it never touches the form's own contrast.
+          The wrapper's own mobile-only px-4 insets the card (a normal-flow
+          child) without affecting this absolutely-positioned layer, which
+          is sized to the wrapper's padding box regardless — same "card
+          floats over quiet texture" language as desktop, just tighter, so
+          the texture is actually visible in the margin at 375px instead of
+          being fully hidden behind an edge-to-edge card. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"

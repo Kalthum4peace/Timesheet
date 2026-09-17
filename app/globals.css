@@ -29,7 +29,7 @@
      the form card only. Kept as a token (not a literal in the component)
      so light/dark get independently tuned opacity, same pattern as every
      other themed value here. */
-  --login-bg-opacity: 0.05;
+  --login-bg-opacity: 0.1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -51,7 +51,7 @@
     --returning-bg: #3d2317;
     --approved: #8fc195;
     --approved-bg: #22331f;
-    --login-bg-opacity: 0.08;
+    --login-bg-opacity: 0.16;
   }
 }
 
@@ -73,7 +73,7 @@
   --returning-bg: #3d2317;
   --approved: #8fc195;
   --approved-bg: #22331f;
-  --login-bg-opacity: 0.08;
+  --login-bg-opacity: 0.16;
 }
 
 @theme inline {
