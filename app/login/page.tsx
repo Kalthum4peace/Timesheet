@@ -63,24 +63,26 @@ export default function LoginPage() {
           viewport (not just the card's own height) so this reads as one
           continuous field with no visible edges, faintly present
           everywhere except under the opaque form card.
-          Deliberately oversized well past plain `cover`: the source JPG
-          has a white "Kalthum Foundation For Peace" caption strip across
-          its bottom ~12% — at a narrow/tall viewport (mobile), `cover`
-          alone matches the container height exactly with zero crop
-          margin, so that strip renders as a stray white band. Sizing to
-          at least 160% of both viewport dimensions (via max(), so
-          whichever axis is more constrained still clears the strip with
-          margin) and biasing the vertical anchor toward the top pushes
-          the crop margin toward the bottom, keeping the strip out of
-          frame at any aspect ratio actually tested (confirmed at both
-          375px and desktop width). */}
+          Deliberately oversized past plain `cover`: the source JPG has a
+          white "Kalthum Foundation For Peace" caption strip across its
+          bottom ~12% — at a narrow/tall viewport (mobile), `cover` alone
+          matches the container height exactly with zero crop margin, so
+          that strip renders as a stray white band. Sizing to at least
+          135% of both viewport dimensions (via max(), so whichever axis
+          is more constrained still clears the strip with margin — ~22%
+          of the image height gets cropped off the bottom at this size,
+          comfortably past the 12% needed) and biasing the vertical
+          anchor toward the top pushes the crop margin toward the bottom,
+          keeping the strip out of frame. Kept deliberately modest (not
+          160%+) so the dove mark itself stays recognizable at mobile
+          widths rather than reading as an abstract line fragment. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           opacity: "var(--login-bg-opacity)",
           backgroundImage: "url(/kfp-logo.jpg)",
-          backgroundSize: "max(160vw, 160vh)",
+          backgroundSize: "max(135vw, 135vh)",
           backgroundPosition: "center 15%",
           backgroundRepeat: "no-repeat",
         }}

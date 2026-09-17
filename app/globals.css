@@ -33,7 +33,7 @@
      viewport width), so the dove/wordmark linework reads clearly even
      at fairly low opacity — needs to be much quieter than the old
      boxed/small rendering did. */
-  --login-bg-opacity: 0.03;
+  --login-bg-opacity: 0.02;
 }
 
 @media (prefers-color-scheme: dark) {
