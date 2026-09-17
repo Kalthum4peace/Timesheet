@@ -48,29 +48,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative isolate overflow-hidden rounded-2xl px-4 sm:px-0">
+    // data-login-page is a pure CSS hook (see globals.css's
+    // `body:has([data-login-page])` rule) that stretches <body>/<main> to
+    // fill the viewport ONLY while this page is mounted, without touching
+    // layout.tsx — needed because header height varies (it wraps at narrow
+    // widths) so a hardcoded calc() would be wrong at some size.
+    <div
+      data-login-page
+      className="relative isolate flex w-full flex-1 items-center justify-center overflow-hidden px-4 py-8 sm:px-0"
+    >
       {/* Second (and only other) signature moment besides the header
           flourish — a quiet, low-opacity texture reserved for this screen,
-          the app's other natural bookend. Sits fully behind the opaque
-          form card below, so it never touches the form's own contrast.
-          The wrapper's own mobile-only px-4 insets the card (a normal-flow
-          child) without affecting this absolutely-positioned layer, which
-          is sized to the wrapper's padding box regardless — same "card
-          floats over quiet texture" language as desktop, just tighter, so
-          the texture is actually visible in the margin at 375px instead of
-          being fully hidden behind an edge-to-edge card. */}
+          the app's other natural bookend. Spans the full remaining
+          viewport (not just the card's own height) so this reads as one
+          continuous field with no visible edges, faintly present
+          everywhere except under the opaque form card.
+          Deliberately oversized well past plain `cover`: the source JPG
+          has a white "Kalthum Foundation For Peace" caption strip across
+          its bottom ~12% — at a narrow/tall viewport (mobile), `cover`
+          alone matches the container height exactly with zero crop
+          margin, so that strip renders as a stray white band. Sizing to
+          at least 160% of both viewport dimensions (via max(), so
+          whichever axis is more constrained still clears the strip with
+          margin) and biasing the vertical anchor toward the top pushes
+          the crop margin toward the bottom, keeping the strip out of
+          frame at any aspect ratio actually tested (confirmed at both
+          375px and desktop width). */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           opacity: "var(--login-bg-opacity)",
           backgroundImage: "url(/kfp-logo.jpg)",
-          backgroundSize: "480px",
-          backgroundPosition: "center 20%",
+          backgroundSize: "max(160vw, 160vh)",
+          backgroundPosition: "center 15%",
           backgroundRepeat: "no-repeat",
         }}
       />
-      <div className="mx-auto max-w-sm rounded-2xl border border-border bg-surface p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6">
         <h1 className="mb-1 text-xl font-semibold">Sign in</h1>
         <p className="mb-6 text-sm text-text-secondary">
           Use the account your administrator set up for you.

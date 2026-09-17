@@ -25,11 +25,15 @@
   --returning-bg: #fbe7de;
   --approved: #3b723d;
   --approved-bg: #e7f1e5;
-  /* Login page's own signature moment — quiet background texture behind
-     the form card only. Kept as a token (not a literal in the component)
-     so light/dark get independently tuned opacity, same pattern as every
-     other themed value here. */
-  --login-bg-opacity: 0.1;
+  /* Login page's own signature moment — quiet full-page background
+     texture. Kept as a token (not a literal in the component) so
+     light/dark get independently tuned opacity, same pattern as every
+     other themed value here. Low value: at background-size:cover the
+     1080x1080 source renders near its native scale (fills most of the
+     viewport width), so the dove/wordmark linework reads clearly even
+     at fairly low opacity — needs to be much quieter than the old
+     boxed/small rendering did. */
+  --login-bg-opacity: 0.03;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -51,7 +55,7 @@
     --returning-bg: #3d2317;
     --approved: #8fc195;
     --approved-bg: #22331f;
-    --login-bg-opacity: 0.16;
+    --login-bg-opacity: 0.05;
   }
 }
 
@@ -73,7 +77,7 @@
   --returning-bg: #3d2317;
   --approved: #8fc195;
   --approved-bg: #22331f;
-  --login-bg-opacity: 0.16;
+  --login-bg-opacity: 0.05;
 }
 
 @theme inline {
@@ -100,4 +104,33 @@
 body {
   background: var(--base);
   color: var(--text-primary);
+}
+
+/* Login page only: stretch body/main to fill the viewport so its
+   background texture can span the full remaining height below the
+   header, with the card centered in it — rather than a box sized to the
+   card's own content height. Scoped via body:has() against the
+   data-login-page marker in app/login/page.tsx instead of hardcoding a
+   calc(100vh - <header height>), since header height varies (it wraps
+   at narrow widths). */
+body:has([data-login-page]) {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+body:has([data-login-page]) main {
+  display: flex;
+  flex: 1;
+  /* main's own mx-auto/max-w-3xl/px-5/py-8 (from layout.tsx, shared by
+     every page) fight with it now being a flex item: an auto margin on a
+     flex item absorbs free space instead of stretching, so main was
+     shrinking to its content width instead of spanning full width. Full
+     width and zero inset is also simply correct for a login page's own
+     full-bleed background — it doesn't need the same reading-width
+     constraint as content pages. */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
