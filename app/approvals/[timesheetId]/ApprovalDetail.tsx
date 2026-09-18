@@ -191,20 +191,30 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
-        <div>
-          <Link href="/approvals" className="text-xs text-text-secondary hover:text-text-primary">
-            ← Pending approvals
-          </Link>
-          <h1 className="mt-1 text-xl font-semibold">{monthLabel(timesheet.year, timesheet.month)}</h1>
-          <p className="text-sm text-text-secondary">
-            {timesheet.profiles?.full_name ?? "Unknown staff"} · {timesheet.location} ·{" "}
-            {DEPARTMENT_LABEL[timesheet.department]}
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-on-tint">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+          </span>
+          <div>
+            <Link href="/approvals" className="text-xs text-text-secondary hover:text-text-primary">
+              ← Pending approvals
+            </Link>
+            <h1 className="mt-1 text-xl font-semibold">{monthLabel(timesheet.year, timesheet.month)}</h1>
+            <p className="text-sm text-text-secondary">
+              {timesheet.profiles?.full_name ?? "Unknown staff"} · {timesheet.location} ·{" "}
+              {DEPARTMENT_LABEL[timesheet.department]}
+            </p>
+          </div>
         </div>
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{timesheetStatusLabel(timesheet.status, timesheet.department)}</p>
+      <p className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold">
+        {timesheetStatusLabel(timesheet.status, timesheet.department)}
+      </p>
 
       <AttendanceGrid
         year={timesheet.year}
@@ -218,7 +228,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
       {!canAct && !notice && <p className="text-sm text-text-secondary">{blockedReason}</p>}
 
       {canAct && (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="comment" className="text-sm font-medium">
               Comment
@@ -232,7 +242,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
                 setComment(e.target.value);
                 if (commentError) setCommentError(null);
               }}
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
               placeholder="Optional for approval, required for decline"
             />
             {commentError && <p className="text-sm text-returning">{commentError}</p>}
@@ -242,7 +252,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
               type="button"
               onClick={handleDecline}
               disabled={acting}
-              className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium disabled:opacity-60"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium outline-none transition-colors hover:border-text-muted focus-visible:ring-2 focus-visible:ring-accent/30 disabled:opacity-60"
             >
               {acting ? "Working…" : "Decline"}
             </button>
@@ -250,7 +260,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
               type="button"
               onClick={handleApprove}
               disabled={acting}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent disabled:opacity-60"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent outline-none transition-colors hover:bg-accent-on-tint focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
             >
               {acting ? "Working…" : "Approve"}
             </button>
@@ -262,7 +272,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
         <button
           type="button"
           onClick={() => router.push("/approvals")}
-          className="self-start rounded-lg border border-border-strong px-4 py-2 text-sm font-medium"
+          className="self-start rounded-lg border border-border-strong px-4 py-2 text-sm font-medium outline-none transition-colors hover:border-text-muted focus-visible:ring-2 focus-visible:ring-accent/30"
         >
           Back to pending approvals
         </button>

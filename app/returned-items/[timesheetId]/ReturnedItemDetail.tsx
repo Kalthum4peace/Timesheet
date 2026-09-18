@@ -145,15 +145,23 @@ export function ReturnedItemDetail({ userId, timesheetId }: { userId: string; ti
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
-        <div>
-          <Link href="/returned-items" className="text-xs text-text-secondary hover:text-text-primary">
-            ← Returned items
-          </Link>
-          <h1 className="mt-1 text-xl font-semibold">{monthLabel(timesheet.year, timesheet.month)}</h1>
-          <p className="text-sm text-text-secondary">
-            {timesheet.profiles?.full_name ?? "Unknown staff"} · {timesheet.location} ·{" "}
-            {DEPARTMENT_LABEL[timesheet.department]}
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-on-tint">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="9 14 4 9 9 4" />
+              <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+            </svg>
+          </span>
+          <div>
+            <Link href="/returned-items" className="text-xs text-text-secondary hover:text-text-primary">
+              ← Returned items
+            </Link>
+            <h1 className="mt-1 text-xl font-semibold">{monthLabel(timesheet.year, timesheet.month)}</h1>
+            <p className="text-sm text-text-secondary">
+              {timesheet.profiles?.full_name ?? "Unknown staff"} · {timesheet.location} ·{" "}
+              {DEPARTMENT_LABEL[timesheet.department]}
+            </p>
+          </div>
         </div>
         <SignOutButton />
       </div>
@@ -179,21 +187,26 @@ export function ReturnedItemDetail({ userId, timesheetId }: { userId: string; ti
       )}
 
       {isMyTurn && (
-        <button
-          type="button"
-          onClick={handleAcknowledge}
-          disabled={acting}
-          className="self-start rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent disabled:opacity-60"
-        >
-          {acting ? "Working…" : "Acknowledge"}
-        </button>
+        <div className="flex flex-col gap-3 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4">
+          <p className="text-sm text-text-secondary">
+            Acknowledging lets this return continue on its way back to the staff member.
+          </p>
+          <button
+            type="button"
+            onClick={handleAcknowledge}
+            disabled={acting}
+            className="self-start rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent outline-none transition-colors hover:bg-accent-on-tint focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
+          >
+            {acting ? "Working…" : "Acknowledge"}
+          </button>
+        </div>
       )}
 
       {notice && (
         <button
           type="button"
           onClick={() => router.push("/returned-items")}
-          className="self-start rounded-lg border border-border-strong px-4 py-2 text-sm font-medium"
+          className="self-start rounded-lg border border-border-strong px-4 py-2 text-sm font-medium outline-none transition-colors hover:border-text-muted focus-visible:ring-2 focus-visible:ring-accent/30"
         >
           Back to returned items
         </button>

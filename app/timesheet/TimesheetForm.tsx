@@ -348,11 +348,19 @@ export function TimesheetForm({ userId }: { userId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          {monthNav}
-          <p className="text-sm text-text-secondary">
-            {fullName} · {timesheet.location} · {DEPARTMENT_LABEL[timesheet.department]}
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-on-tint">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+          </span>
+          <div className="flex flex-col gap-1">
+            {monthNav}
+            <p className="text-sm text-text-secondary">
+              {fullName} · {timesheet.location} · {DEPARTMENT_LABEL[timesheet.department]}
+            </p>
+          </div>
         </div>
         <SignOutButton />
       </div>
@@ -373,12 +381,6 @@ export function TimesheetForm({ userId }: { userId: string }) {
         editable={editable}
         onChange={setDay}
       />
-
-      {editable && (
-        <p className="text-sm text-text-secondary">
-          {filledDays} of {totalDays} days filled.
-        </p>
-      )}
 
       {error && <p className="text-sm text-returning">{error}</p>}
       {notice && <p className="text-sm text-approved">{notice}</p>}

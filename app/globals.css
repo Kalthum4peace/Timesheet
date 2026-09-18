@@ -34,6 +34,39 @@
      at fairly low opacity — needs to be much quieter than the old
      boxed/small rendering did. */
   --login-bg-opacity: 0.02;
+
+  /* Header pilot (client feedback 2026-09-18: lean harder into the one
+     accent across the whole app, starting with header/nav + Approvals as
+     a pilot before wider rollout). The header is a fixed brand-blue bar —
+     intentionally NOT swapped in dark mode, same treatment as the logo
+     asset itself (a fixed blue square regardless of app theme). Keeping
+     it constant also means one set of contrast numbers covers both
+     themes instead of two. Literal fixed values, not the theme-swapping
+     --accent/--on-accent tokens (those flip to a lighter blue + dark text
+     in dark mode, which would fight a bar meant to stay put).
+     Contrast verified (WCAG AA): white on #0270CE = 4.99:1; the reverse
+     pairing (accent text on white chip) is the same pair, same ratio. */
+  --header-bg: #0270ce;
+  --on-header: #ffffff;
+  --header-chip-bg: #ffffff;
+  --on-header-chip: #0270ce;
+
+  /* AttendanceGrid calendar wash (client feedback 2026-09-18: lean into
+     the accent further, this time in the calendar itself — filled-day
+     tint, weekend-column wash, weekday header band). Precomputed
+     composite hexes rather than a live opacity utility because the same
+     opacity percentage against --accent reads clearly in light mode but
+     is nearly indistinguishable from --surface-2 in dark mode (accent is
+     much lighter there) — measured, not assumed: light accent/5 over
+     surface = #F2F7F9 (clearly cooler than surface-2's #F3ECDF), but dark
+     accent/5 over surface = #262624, barely different from surface-2's
+     #2C271E. Dark values below are boosted independently so the weekend
+     wash is actually visible at a glance in both themes, not just in
+     light. Contrast re-verified at every tier against text-primary/
+     text-secondary, both themes — worst case 4.6:1, still clears AA. */
+  --cell-weekend: #f2f7f9;
+  --cell-filled: #e6f0f6;
+  --cell-filled-weekend: #d9e9f4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,6 +89,9 @@
     --approved: #8fc195;
     --approved-bg: #22331f;
     --login-bg-opacity: 0.05;
+    --cell-weekend: #2a3237;
+    --cell-filled: #2c3944;
+    --cell-filled-weekend: #2e4150;
   }
 }
 
@@ -78,6 +114,9 @@
   --approved: #8fc195;
   --approved-bg: #22331f;
   --login-bg-opacity: 0.05;
+  --cell-weekend: #2a3237;
+  --cell-filled: #2c3944;
+  --cell-filled-weekend: #2e4150;
 }
 
 @theme inline {
@@ -98,6 +137,13 @@
   --color-returning-bg: var(--returning-bg);
   --color-approved: var(--approved);
   --color-approved-bg: var(--approved-bg);
+  --color-header-bg: var(--header-bg);
+  --color-on-header: var(--on-header);
+  --color-header-chip-bg: var(--header-chip-bg);
+  --color-on-header-chip: var(--on-header-chip);
+  --color-cell-weekend: var(--cell-weekend);
+  --color-cell-filled: var(--cell-filled);
+  --color-cell-filled-weekend: var(--cell-filled-weekend);
   --font-sans: var(--font-work-sans), system-ui, -apple-system, sans-serif;
 }
 

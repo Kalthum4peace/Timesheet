@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Work_Sans } from "next/font/google";
 import Image from "next/image";
-import Link from "next/link";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
+import { HeaderNav } from "@/components/HeaderNav";
 
 const workSans = Work_Sans({
   subsets: ["latin"],
@@ -45,25 +45,40 @@ export default async function RootLayout({
     hasNoTimesheetOfOwn = profile?.role === "admin";
   }
 
+  // Admin (but not admin_hr — see generate_approval_chain's "own timesheet"
+  // branch, which DOES cover admin_hr) has no timesheet chain of its own,
+  // per PROJECT_CONTEXT's admin/approval separation, so "My timesheet"
+  // would only lead to a dead end for a plain admin.
+  const navItems = user
+    ? [
+        ...(!hasNoTimesheetOfOwn ? [{ href: "/timesheet", label: "My timesheet" }] : []),
+        ...(canApprove ? [{ href: "/approvals", label: "Approvals" }] : []),
+        ...(canApprove ? [{ href: "/returned-items", label: "Returned items" }] : []),
+        ...(canApprove ? [{ href: "/roster", label: "Staff roster" }] : []),
+        ...(isHr ? [{ href: "/all-timesheets", label: "All timesheets" }] : []),
+        ...(canAccessAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+      ]
+    : [];
+
   return (
     <html lang="en">
       <body className={`${workSans.variable} font-sans antialiased`}>
-        <header className="border-b border-border bg-surface">
+        <header className="bg-header-bg">
           <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
             <Image
-              src="/kfp-logo.jpg"
+              src="/kfp-logo-mark.jpg"
               alt="Kalthum Foundation for Peace"
               width={36}
               height={36}
               className="rounded-lg"
             />
             <div className="flex flex-col">
-              <span className="whitespace-nowrap text-lg font-semibold leading-none">
+              <span className="whitespace-nowrap text-lg font-semibold leading-none text-on-header">
                 <span className="sm:hidden">KFP Timesheet</span>
                 <span className="hidden sm:inline">Kalthum For Peace Timesheet</span>
               </span>
               <svg
-                className="mt-1 text-accent"
+                className="mt-1 text-on-header/50"
                 width="110"
                 height="16"
                 viewBox="0 0 130 20"
@@ -79,45 +94,7 @@ export default async function RootLayout({
                 />
               </svg>
             </div>
-            {user && (
-              <nav className="ml-auto flex gap-5 text-sm font-medium text-text-secondary">
-                {/* Admin (but not admin_hr — see generate_approval_chain's
-                    "own timesheet" branch, which DOES cover admin_hr) has
-                    no timesheet chain of its own, per PROJECT_CONTEXT's
-                    admin/approval separation, so this link would only lead
-                    to a dead end for a plain admin. */}
-                {!hasNoTimesheetOfOwn && (
-                  <Link href="/timesheet" className="hover:text-text-primary">
-                    My timesheet
-                  </Link>
-                )}
-                {canApprove && (
-                  <Link href="/approvals" className="hover:text-text-primary">
-                    Approvals
-                  </Link>
-                )}
-                {canApprove && (
-                  <Link href="/returned-items" className="hover:text-text-primary">
-                    Returned items
-                  </Link>
-                )}
-                {canApprove && (
-                  <Link href="/roster" className="hover:text-text-primary">
-                    Staff roster
-                  </Link>
-                )}
-                {isHr && (
-                  <Link href="/all-timesheets" className="hover:text-text-primary">
-                    All timesheets
-                  </Link>
-                )}
-                {canAccessAdmin && (
-                  <Link href="/admin" className="hover:text-text-primary">
-                    Admin
-                  </Link>
-                )}
-              </nav>
-            )}
+            {user && <HeaderNav items={navItems} />}
           </div>
         </header>
         <main className="mx-auto max-w-3xl px-5 py-8">{children}</main>

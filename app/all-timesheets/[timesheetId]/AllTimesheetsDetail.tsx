@@ -135,25 +135,37 @@ export function AllTimesheetsDetail({ timesheetId }: { timesheetId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
-        <div>
-          <Link href="/all-timesheets" className="text-xs text-text-secondary hover:text-text-primary">
-            ← All timesheets
-          </Link>
-          <h1 className="mt-1 text-xl font-semibold">{monthLabel(timesheet.year, timesheet.month)}</h1>
-          <p className="text-sm text-text-secondary">
-            {timesheet.profiles?.full_name ?? "Unknown staff"} · {timesheet.location} ·{" "}
-            {DEPARTMENT_LABEL[timesheet.department]}
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-on-tint">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </span>
+          <div>
+            <Link href="/all-timesheets" className="text-xs text-text-secondary hover:text-text-primary">
+              ← All timesheets
+            </Link>
+            <h1 className="mt-1 text-xl font-semibold">{monthLabel(timesheet.year, timesheet.month)}</h1>
+            <p className="text-sm text-text-secondary">
+              {timesheet.profiles?.full_name ?? "Unknown staff"} · {timesheet.location} ·{" "}
+              {DEPARTMENT_LABEL[timesheet.department]}
+            </p>
+          </div>
         </div>
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{timesheetStatusLabel(timesheet.status, timesheet.department)}</p>
+      <p className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold">
+        {timesheetStatusLabel(timesheet.status, timesheet.department)}
+      </p>
 
       <AttendanceGrid year={timesheet.year} month={timesheet.month} entries={entries} editable={false} />
 
       {actions.length > 0 && (
-        <div className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4">
+        <div className="flex flex-col gap-1 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">History</p>
           {actions.map((a, i) => (
             <div key={i} className="border-t border-border py-2 text-sm first:border-t-0 first:pt-0">

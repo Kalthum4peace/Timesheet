@@ -36,6 +36,12 @@ const EMAILS = [
   // Created through the real admin UI flow during testing, not by
   // create-ui-test-users.mjs — still needs cleaning up before production.
   'ui-test-medical-staff@kalthum-dev.test',
+  // Throwaway fixture from the header/calendar accent pass — needed a
+  // genuinely in-progress (partially filled) draft to screenshot, since
+  // every existing fixture's timesheet was already either fully filled or
+  // blocked by the future-month lock. Deleted immediately after use, same
+  // discipline as ui-test-outsider above.
+  'ui-test-progress@kalthum-dev.test',
 ];
 
 async function main() {
