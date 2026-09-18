@@ -1,13 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AllTimesheetsDetail } from "./AllTimesheetsDetail";
+import { RosterList } from "./RosterList";
 
-export default async function AllTimesheetsDetailPage({
-  params,
-}: {
-  params: Promise<{ timesheetId: string }>;
-}) {
-  const { timesheetId } = await params;
+const ROSTER_ROLES = ["team_lead", "department_head", "spm", "hr", "admin_hr"];
+
+export default async function RosterPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -18,9 +15,14 @@ export default async function AllTimesheetsDetailPage({
   }
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "hr" && profile?.role !== "admin_hr") {
+  if (!profile || !ROSTER_ROLES.includes(profile.role)) {
     redirect("/timesheet");
   }
 
-  return <AllTimesheetsDetail timesheetId={timesheetId} />;
+  return (
+    <RosterList
+      userId={user.id}
+      role={profile.role as "team_lead" | "department_head" | "spm" | "hr" | "admin_hr"}
+    />
+  );
 }

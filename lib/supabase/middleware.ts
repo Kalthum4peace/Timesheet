@@ -34,6 +34,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/approvals") ||
     request.nextUrl.pathname.startsWith("/returned-items") ||
     request.nextUrl.pathname.startsWith("/all-timesheets") ||
+    request.nextUrl.pathname.startsWith("/roster") ||
     request.nextUrl.pathname.startsWith("/admin");
 
   if (!user && isProtectedRoute) {

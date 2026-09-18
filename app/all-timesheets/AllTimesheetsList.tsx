@@ -7,7 +7,7 @@ import {
   type Department,
   type TimesheetStatus,
   DEPARTMENT_LABEL,
-  TIMESHEET_STATUS_LABEL,
+  timesheetStatusLabel,
   monthLabel,
 } from "@/lib/timesheet";
 import { SignOutButton } from "@/app/timesheet/SignOutButton";
@@ -18,7 +18,7 @@ type Row = {
   month: number;
   year: number;
   status: TimesheetStatus;
-  profiles: { full_name: string } | null;
+  profiles: { full_name: string; hr_number: string | null } | null;
 };
 
 const DEPARTMENT_FILTERS: { value: Department | "all"; label: string }[] = [
@@ -56,7 +56,7 @@ export function AllTimesheetsList() {
 
       let query = supabase
         .from("timesheets")
-        .select("id, department, month, year, status, profiles(full_name)")
+        .select("id, department, month, year, status, profiles(full_name, hr_number)")
         .order("year", { ascending: false })
         .order("month", { ascending: false });
 
@@ -82,9 +82,11 @@ export function AllTimesheetsList() {
   }, [supabase, department, status]);
 
   const visibleRows = rows.filter((row) => {
-    if (!staffQuery.trim()) return true;
+    const query = staffQuery.trim().toLowerCase();
+    if (!query) return true;
     const name = row.profiles?.full_name ?? "";
-    return name.toLowerCase().includes(staffQuery.trim().toLowerCase());
+    const hrNumber = row.profiles?.hr_number ?? "";
+    return name.toLowerCase().includes(query) || hrNumber.toLowerCase().includes(query);
   });
 
   return (
@@ -100,7 +102,7 @@ export function AllTimesheetsList() {
           type="text"
           value={staffQuery}
           onChange={(e) => setStaffQuery(e.target.value)}
-          placeholder="Search staff name"
+          placeholder="Search staff name or HR number"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <select
@@ -151,7 +153,7 @@ export function AllTimesheetsList() {
                   </p>
                 </div>
                 <span className="text-xs font-medium text-text-muted">
-                  {TIMESHEET_STATUS_LABEL[row.status]}
+                  {timesheetStatusLabel(row.status, row.department)}
                 </span>
               </Link>
             </li>

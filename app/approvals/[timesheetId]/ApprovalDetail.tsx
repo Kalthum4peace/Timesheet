@@ -10,7 +10,7 @@ import {
   type ApprovalType,
   type Department,
   type TimesheetStatus,
-  TIMESHEET_STATUS_LABEL,
+  timesheetStatusLabel,
   DEPARTMENT_LABEL,
   APPROVAL_TYPE_ACTIVE_STATUS,
   monthLabel,
@@ -204,7 +204,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{TIMESHEET_STATUS_LABEL[timesheet.status]}</p>
+      <p className="text-sm font-medium">{timesheetStatusLabel(timesheet.status, timesheet.department)}</p>
 
       <AttendanceGrid
         year={timesheet.year}

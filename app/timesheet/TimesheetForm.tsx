@@ -7,7 +7,7 @@ import {
   type AttendanceStatus,
   type Department,
   type TimesheetStatus,
-  TIMESHEET_STATUS_LABEL,
+  timesheetStatusLabel,
   DEPARTMENT_LABEL,
   daysInMonth,
   dateKey,
@@ -37,6 +37,11 @@ export function TimesheetForm({ userId }: { userId: string }) {
   const [viewYear, setViewYear] = useState(realYear);
   const isCurrentMonth = viewMonth === realMonth && viewYear === realYear;
   const atEarliestMonth = viewYear <= MIN_YEAR && viewMonth <= 1;
+  // Client feedback (demo, 2026-09-18): staff must not be able to reach a
+  // future month at all — nothing to view there, and nothing should be
+  // fillable. The real enforcement is server-side (timesheets_insert_staff
+  // RLS policy); this just stops the UI from ever offering the dead end.
+  const atLatestMonth = isCurrentMonth;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +66,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
   }
 
   function goToNextMonth() {
+    if (atLatestMonth) return;
     setNotice(null);
     setError(null);
     setViewMonth((m) => (m === 12 ? 1 : m + 1));
@@ -288,8 +294,9 @@ export function TimesheetForm({ userId }: { userId: string }) {
       <button
         type="button"
         onClick={goToNextMonth}
+        disabled={atLatestMonth}
         aria-label="Next month"
-        className="rounded-lg border border-border-strong px-2.5 py-1 text-sm font-medium"
+        className="rounded-lg border border-border-strong px-2.5 py-1 text-sm font-medium disabled:opacity-40"
       >
         ›
       </button>
@@ -351,7 +358,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
       </div>
 
       <div className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold text-text-primary">
-        {TIMESHEET_STATUS_LABEL[timesheet.status]}
+        {timesheetStatusLabel(timesheet.status, timesheet.department)}
       </div>
       {timesheet.status === "returning" && returnRecipient !== null && (
         <p className="text-sm text-text-secondary">

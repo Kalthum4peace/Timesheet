@@ -8,7 +8,7 @@ import {
   type AttendanceStatus,
   type Department,
   type TimesheetStatus,
-  TIMESHEET_STATUS_LABEL,
+  timesheetStatusLabel,
   DEPARTMENT_LABEL,
   monthLabel,
 } from "@/lib/timesheet";
@@ -148,7 +148,7 @@ export function AllTimesheetsDetail({ timesheetId }: { timesheetId: string }) {
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{TIMESHEET_STATUS_LABEL[timesheet.status]}</p>
+      <p className="text-sm font-medium">{timesheetStatusLabel(timesheet.status, timesheet.department)}</p>
 
       <AttendanceGrid year={timesheet.year} month={timesheet.month} entries={entries} editable={false} />
 

@@ -51,8 +51,34 @@ async function stepsFor(timesheetId, cycle) {
 
 const createdPersonaIds = [];
 const createdTimesheetIds = [];
+let deactivatedExistingIds = [];
 
 async function main() {
+  // This script creates its own throwaway spm1/hr1 personas and assumes
+  // they'll be the ONLY active spm/hr(-equivalent) profiles during the run
+  // — true when this project only had test fixtures, no longer guaranteed
+  // now that a real SPM/HR can exist in the same dev database (found
+  // 2026-09-18: a real SPM account coexisting with the ui-test-spm
+  // fixture broke every test in this file with "expected exactly one
+  // active SPM profile, found N", unrelated to any actual bug). Temporarily
+  // deactivate every OTHER currently-active spm/hr/admin_hr FIXTURE profile
+  // for the duration of this run and restore them in cleanup — never
+  // delete them, they're not this script's to own. Scoped strictly to the
+  // @kalthum-dev.test fixture domain (the one marker every test/fixture
+  // account in this project consistently uses) — NEVER by role alone.
+  // A real profile (e.g. a client's actual SPM, on a real email domain)
+  // must never be touched by this guard, even temporarily: if a real
+  // spm/hr/admin_hr coexists with a fixture at the same role, this
+  // correctly leaves it alone and lets the run fail with the genuine
+  // "found N" ambiguity error rather than silently deactivating someone's
+  // real account.
+  const { data: existing } = await admin.from('profiles').select('id').in('role', ['spm', 'hr', 'admin_hr']).eq('active', true).like('email', '%@kalthum-dev.test');
+  deactivatedExistingIds = (existing ?? []).map((p) => p.id);
+  if (deactivatedExistingIds.length > 0) {
+    console.log(`Temporarily deactivating ${deactivatedExistingIds.length} existing spm/hr/admin_hr profile(s) for this run...`);
+    await admin.from('profiles').update({ active: false }).in('id', deactivatedExistingIds);
+  }
+
   console.log('Creating personas...');
   const spm1 = await createPersona('spm1', 'Grace SPM', 'spm');
   const hr1 = await createPersona('hr1', 'Ibrahim HR', 'hr');
@@ -226,6 +252,10 @@ async function main() {
   }
 
   console.log('\n--- Cleanup ---\n');
+  if (deactivatedExistingIds.length > 0) {
+    await admin.from('profiles').update({ active: true }).in('id', deactivatedExistingIds);
+    console.log(`Restored ${deactivatedExistingIds.length} existing spm/hr/admin_hr profile(s) to active.`);
+  }
   await admin.from('notifications').delete().in('timesheet_id', createdTimesheetIds);
   await admin.from('approval_steps').delete().in('timesheet_id', createdTimesheetIds);
   await admin.from('timesheet_actions').delete().in('timesheet_id', createdTimesheetIds);
@@ -241,6 +271,6 @@ async function main() {
 }
 
 main().catch(async (e) => {
-  console.error('\nSCRIPT ERROR (test data may not be fully cleaned up):', e.message);
+  console.error('\nSCRIPT ERROR (test data may not be fully cleaned up, and any existing spm/hr/admin_hr profiles this run deactivated may still be inactive — check profiles.active manually):', e.message);
   process.exit(1);
 });

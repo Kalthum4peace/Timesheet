@@ -7,7 +7,7 @@ import {
   type ApprovalType,
   type Department,
   type TimesheetStatus,
-  APPROVAL_TYPE_LABEL,
+  approvalTypeLabel,
   APPROVAL_TYPE_ACTIVE_STATUS,
   DEPARTMENT_LABEL,
   monthLabel,
@@ -148,7 +148,7 @@ export function PendingApprovalsList({ userId }: { userId: string }) {
                   </p>
                 </div>
                 <span className="text-xs font-medium text-text-muted">
-                  {APPROVAL_TYPE_LABEL[item.approvalType]} review
+                  {approvalTypeLabel(item.approvalType, item.department)} review
                 </span>
               </Link>
             </li>

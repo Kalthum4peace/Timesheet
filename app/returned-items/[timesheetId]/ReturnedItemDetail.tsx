@@ -9,7 +9,7 @@ import {
   type AttendanceStatus,
   type Department,
   type TimesheetStatus,
-  TIMESHEET_STATUS_LABEL,
+  timesheetStatusLabel,
   DEPARTMENT_LABEL,
   monthLabel,
 } from "@/lib/timesheet";
@@ -158,7 +158,7 @@ export function ReturnedItemDetail({ userId, timesheetId }: { userId: string; ti
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{TIMESHEET_STATUS_LABEL[timesheet.status]}</p>
+      <p className="text-sm font-medium">{timesheetStatusLabel(timesheet.status, timesheet.department)}</p>
 
       {declineComment && (
         <div className="rounded-xl border border-returning-bg bg-returning-bg p-4">

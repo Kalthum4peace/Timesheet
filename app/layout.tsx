@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: "Monthly timesheet and approval platform for Kalthum for Peace.",
 };
 
-const APPROVER_ROLES = ["team_lead", "department_head", "spm", "hr"];
+const APPROVER_ROLES = ["team_lead", "department_head", "spm", "hr", "admin_hr"];
 
 export default async function RootLayout({
   children,
@@ -30,12 +30,19 @@ export default async function RootLayout({
 
   let canApprove = false;
   let isHr = false;
-  let isAdmin = false;
+  let canAccessAdmin = false;
+  let hasNoTimesheetOfOwn = false;
   if (user) {
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
     canApprove = !!profile && APPROVER_ROLES.includes(profile.role);
-    isHr = profile?.role === "hr";
-    isAdmin = profile?.role === "admin";
+    // admin_hr carries both boundaries at once: it sees the HR surfaces
+    // (All timesheets) AND the Admin surface, but — unlike plain admin — it
+    // DOES have its own timesheet chain (see generate_approval_chain's
+    // "own timesheet" branch), so it's deliberately NOT lumped into
+    // hasNoTimesheetOfOwn below.
+    isHr = profile?.role === "hr" || profile?.role === "admin_hr";
+    canAccessAdmin = profile?.role === "admin" || profile?.role === "admin_hr";
+    hasNoTimesheetOfOwn = profile?.role === "admin";
   }
 
   return (
@@ -74,11 +81,12 @@ export default async function RootLayout({
             </div>
             {user && (
               <nav className="ml-auto flex gap-5 text-sm font-medium text-text-secondary">
-                {/* Admin has no timesheet chain of its own (see
-                    generate_approval_chain — no rule for role='admin'),
-                    per PROJECT_CONTEXT's admin/approval separation, so this
-                    link would only lead to a dead end for them. */}
-                {!isAdmin && (
+                {/* Admin (but not admin_hr — see generate_approval_chain's
+                    "own timesheet" branch, which DOES cover admin_hr) has
+                    no timesheet chain of its own, per PROJECT_CONTEXT's
+                    admin/approval separation, so this link would only lead
+                    to a dead end for a plain admin. */}
+                {!hasNoTimesheetOfOwn && (
                   <Link href="/timesheet" className="hover:text-text-primary">
                     My timesheet
                   </Link>
@@ -93,12 +101,17 @@ export default async function RootLayout({
                     Returned items
                   </Link>
                 )}
+                {canApprove && (
+                  <Link href="/roster" className="hover:text-text-primary">
+                    Staff roster
+                  </Link>
+                )}
                 {isHr && (
                   <Link href="/all-timesheets" className="hover:text-text-primary">
                     All timesheets
                   </Link>
                 )}
-                {isAdmin && (
+                {canAccessAdmin && (
                   <Link href="/admin" className="hover:text-text-primary">
                     Admin
                   </Link>

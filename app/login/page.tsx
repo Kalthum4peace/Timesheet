@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const APPROVER_ROLES = ["team_lead", "department_head", "spm", "hr"];
+const APPROVER_ROLES = ["team_lead", "department_head", "spm", "hr", "admin_hr"];
 
 function landingPathForRole(role: string | undefined) {
   if (role === "admin") return "/admin";

@@ -13,7 +13,7 @@ export default async function AllTimesheetsPage() {
   }
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "hr") {
+  if (profile?.role !== "hr" && profile?.role !== "admin_hr") {
     redirect("/timesheet");
   }
 

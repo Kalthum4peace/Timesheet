@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CreateStaffResult = { ok: true } | { ok: false; error: string };
 
-const VALID_ROLES = ["staff", "team_lead", "department_head", "spm", "hr", "admin"];
+const VALID_ROLES = ["staff", "team_lead", "department_head", "spm", "hr", "admin", "admin_hr"];
 
 export async function createStaffMember(
   _prev: CreateStaffResult,
@@ -27,12 +27,13 @@ export async function createStaffMember(
     .select("role")
     .eq("id", user.id)
     .single();
-  if (callerProfile?.role !== "admin") {
+  if (callerProfile?.role !== "admin" && callerProfile?.role !== "admin_hr") {
     return { ok: false, error: "Only an admin can create staff members." };
   }
 
   const fullName = String(formData.get("fullName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
+  const hrNumber = String(formData.get("hrNumber") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
   const role = String(formData.get("role") ?? "");
   const password = String(formData.get("password") ?? "");
@@ -68,6 +69,7 @@ export async function createStaffMember(
     id: created.user.id,
     full_name: fullName,
     email,
+    hr_number: hrNumber || null,
     location,
     role,
   });
@@ -75,7 +77,12 @@ export async function createStaffMember(
     // Roll back the auth user so a failed profile insert doesn't leave an
     // orphaned account with no profile behind.
     await admin.auth.admin.deleteUser(created.user.id);
-    return { ok: false, error: "Couldn't create the profile: " + profileError.message };
+    return {
+      ok: false,
+      error: profileError.message.includes("profiles_hr_number_unique")
+        ? "That HR number is already assigned to another staff member."
+        : "Couldn't create the profile: " + profileError.message,
+    };
   }
 
   if (role === "staff") {

@@ -62,6 +62,28 @@ export const DEPARTMENT_LABEL: Record<Department, string> = {
   operations: "Operations",
 };
 
+// department_head is one application role shared across departments (see
+// PROJECT_CONTEXT §3), but the client wants the title shown to reflect
+// which department a given instance is for — "Head of Medical" / "Head of
+// Operations" — rather than the generic role name. Only meaningful once a
+// specific timesheet/step's department is known, so these are functions of
+// department rather than a static label map like APPROVAL_TYPE_LABEL/
+// TIMESHEET_STATUS_LABEL above (which stay as generic fallbacks for
+// contexts with no department in hand, e.g. a bare role picker).
+export function departmentHeadLabel(department: Department): string {
+  return department === "medical" ? "Head of Medical" : "Head of Operations";
+}
+
+export function approvalTypeLabel(type: ApprovalType, department: Department): string {
+  if (type === "department_head") return departmentHeadLabel(department);
+  return APPROVAL_TYPE_LABEL[type];
+}
+
+export function timesheetStatusLabel(status: TimesheetStatus, department: Department): string {
+  if (status === "pending_department_head") return `Awaiting ${departmentHeadLabel(department)}`;
+  return TIMESHEET_STATUS_LABEL[status];
+}
+
 export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function daysInMonth(year: number, month: number) {
