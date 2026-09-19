@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { fetchPendingFinalApprovers } from "@/lib/pendingApprovers";
 import {
+  type ApprovalType,
   type Department,
   type TimesheetStatus,
   DEPARTMENT_LABEL,
@@ -19,6 +21,7 @@ type AssignmentRow = {
 };
 
 type TimesheetRow = {
+  id: string;
   staff_id: string;
   status: TimesheetStatus;
   department: Department;
@@ -30,6 +33,7 @@ type RosterItem = {
   hrNumber: string | null;
   department: Department;
   status: TimesheetStatus | null;
+  stillPendingFinal: ApprovalType[] | undefined;
 };
 
 const DEPARTMENT_FILTERS: { value: Department | "all"; label: string }[] = [
@@ -114,7 +118,7 @@ export function RosterList({ userId, role }: { userId: string; role: Role }) {
       if (staffIds.length > 0) {
         const { data: timesheets, error: timesheetsError } = await supabase
           .from("timesheets")
-          .select("staff_id, status, department")
+          .select("id, staff_id, status, department")
           .eq("month", currentMonth)
           .eq("year", currentYear)
           .in("staff_id", staffIds);
@@ -127,6 +131,12 @@ export function RosterList({ userId, role }: { userId: string; role: Role }) {
         timesheetByStaff = new Map((timesheets as TimesheetRow[]).map((t) => [t.staff_id, t]));
       }
 
+      const finalPendingMap = await fetchPendingFinalApprovers(
+        supabase,
+        [...timesheetByStaff.values()].filter((t) => t.status === "pending_final_review").map((t) => t.id),
+      );
+      if (cancelled) return;
+
       setItems(
         staffRows.map((row) => {
           const ts = timesheetByStaff.get(row.staff_id);
@@ -136,6 +146,7 @@ export function RosterList({ userId, role }: { userId: string; role: Role }) {
             hrNumber: row.profiles?.hr_number ?? null,
             department: row.department,
             status: ts?.status ?? null,
+            stillPendingFinal: ts ? finalPendingMap[ts.id] : undefined,
           };
         }),
       );
@@ -234,7 +245,9 @@ export function RosterList({ userId, role }: { userId: string; role: Role }) {
               <span
                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${CHIP_CLASS[chipTone(item.status)]}`}
               >
-                {item.status === null ? "Not submitted" : timesheetStatusLabel(item.status, item.department)}
+                {item.status === null
+                  ? "Not submitted"
+                  : timesheetStatusLabel(item.status, item.department, item.stillPendingFinal)}
               </span>
             </li>
           ))}

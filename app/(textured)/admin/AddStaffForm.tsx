@@ -7,14 +7,20 @@ import { departmentHeadLabel, type Department } from "@/lib/timesheet";
 
 type Profile = { id: string; full_name: string };
 
+// Plain "hr" is retired for NEW staff (client decision, round 2, 2026-09-18):
+// the HR position is always created as admin_hr going forward. Existing
+// hr-role accounts are untouched and keep working. The one remaining
+// HR-carrying option is admin_hr, labelled "HR / Admin" so it's clear this
+// account gets Admin access too (and stays distinguishable from plain
+// "Admin", which has no timesheet chain of its own). The label is the only
+// thing to change if the client would rather it read just "HR".
 const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "staff", label: "Staff" },
   { value: "team_lead", label: "Team lead" },
   { value: "department_head", label: "Department head" },
   { value: "spm", label: "SPM" },
-  { value: "hr", label: "HR" },
+  { value: "admin_hr", label: "HR / Admin" },
   { value: "admin", label: "Admin" },
-  { value: "admin_hr", label: "Admin + HR" },
 ];
 
 const initialState: CreateStaffResult = { ok: false, error: "" };

@@ -114,21 +114,25 @@ export function ReturnedItemsList({ userId }: { userId: string }) {
             <li key={item.timesheetId}>
               <Link
                 href={`/returned-items/${item.timesheetId}`}
-                className="flex items-center gap-4 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4 transition-colors hover:border-border-strong hover:border-l-accent-on-tint"
+                className="flex flex-col gap-2 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4 transition-colors hover:border-border-strong hover:border-l-accent-on-tint sm:flex-row sm:items-center sm:gap-4"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent-on-tint">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <polyline points="9 14 4 9 9 4" />
-                    <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
-                  </svg>
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{item.staffName}</p>
-                  <p className="text-xs text-text-secondary">
-                    {DEPARTMENT_LABEL[item.department]} · {monthLabel(item.year, item.month)}
-                  </p>
+                <div className="flex flex-1 items-center gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent-on-tint">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="9 14 4 9 9 4" />
+                      <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+                    </svg>
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.staffName}</p>
+                    <p className="text-xs text-text-secondary">
+                      {DEPARTMENT_LABEL[item.department]} · {monthLabel(item.year, item.month)}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-text-muted">Acknowledge return</span>
+                <span className="pl-14 text-xs font-medium text-text-secondary sm:pl-0 sm:text-right">
+                  Acknowledge return
+                </span>
               </Link>
             </li>
           ))}

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AttendanceGrid } from "@/components/AttendanceGrid";
+import { StatusPill } from "@/components/StatusPill";
+import { fetchPendingFinalApprovers } from "@/lib/pendingApprovers";
 import {
   type AttendanceStatus,
   type ApprovalType,
@@ -40,6 +42,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
   const [timesheet, setTimesheet] = useState<Timesheet | null>(null);
   const [entries, setEntries] = useState<Record<string, AttendanceStatus>>({});
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
+  const [pendingFinal, setPendingFinal] = useState<ApprovalType[] | undefined>(undefined);
   const [comment, setComment] = useState("");
   const [commentError, setCommentError] = useState<string | null>(null);
 
@@ -101,6 +104,14 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
         blocked = "An earlier approver hasn't acted on this timesheet yet.";
       }
 
+      let finalPending: ApprovalType[] | undefined;
+      if (ts.status === "pending_final_review") {
+        const byTimesheet = await fetchPendingFinalApprovers(supabase, [timesheetId]);
+        if (cancelled) return;
+        finalPending = byTimesheet[timesheetId];
+      }
+
+      setPendingFinal(finalPending);
       setTimesheet(ts as unknown as Timesheet);
       setEntries(
         Object.fromEntries((attendance ?? []).map((row) => [row.date, row.status as AttendanceStatus])),
@@ -165,6 +176,15 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
       .eq("id", timesheetId)
       .single();
     if (refreshed) {
+      // Approving/declining can move the timesheet into (or out of)
+      // pending_final_review, and who is still pending changes too — refetch
+      // so the label never lags the action just taken.
+      if (refreshed.status === "pending_final_review") {
+        const byTimesheet = await fetchPendingFinalApprovers(supabase, [timesheetId]);
+        setPendingFinal(byTimesheet[timesheetId]);
+      } else {
+        setPendingFinal(undefined);
+      }
       setTimesheet((prev) => (prev ? { ...prev, status: refreshed.status } : prev));
     }
   }
@@ -212,9 +232,7 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
         <SignOutButton />
       </div>
 
-      <p className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold">
-        {timesheetStatusLabel(timesheet.status, timesheet.department)}
-      </p>
+      <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department, pendingFinal)} />
 
       <AttendanceGrid
         year={timesheet.year}

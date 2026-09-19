@@ -15,7 +15,14 @@
   --border-strong: #d8cdb9;
   --text-primary: #2a241d;
   --text-secondary: #6f6558;
-  --text-muted: #9b927f;
+  /* Muted text is real text (calendar legend, "(optional)", "(required to
+     decline)", history dates), so it must clear AA — it did not: the
+     original #9b927f measured 3.06:1 on the card surface (light) and the
+     dark #867c69 measured 3.94:1. Now 5.42/5.07/4.65:1 (light) and
+     5.40/5.88/4.94:1 (dark) on surface/page/surface-2 — passes on every
+     background it could plausibly sit on. Close to text-secondary by
+     necessity: no lighter gray can pass AA on ivory. */
+  --text-muted: #72685a;
   --accent: #0270ce;
   --accent-on-tint: #0268bb;
   --on-accent: #ffffff;
@@ -25,15 +32,17 @@
   --returning-bg: #fbe7de;
   --approved: #3b723d;
   --approved-bg: #e7f1e5;
-  /* Login page's own signature moment — quiet full-page background
-     texture. Kept as a token (not a literal in the component) so
-     light/dark get independently tuned opacity, same pattern as every
-     other themed value here. Low value: at background-size:cover the
-     1080x1080 source renders near its native scale (fills most of the
-     viewport width), so the dove/wordmark linework reads clearly even
-     at fairly low opacity — needs to be much quieter than the old
-     boxed/small rendering did. */
-  --login-bg-opacity: 0.02;
+  /* Full-page background texture (login + every screen except My
+     timesheet — see components/TexturedPage.tsx). Kept as a token so
+     light/dark get independently tuned opacity.
+     History: this started deliberately quiet (0.02/0.05) as OUR judgment
+     call; client feedback round 2 (2026-09-18) explicitly reversed it —
+     they want it clearly visible as a background image, not a texture.
+     Safe to run this high because text never sits on it: the login card
+     and the content panel are opaque, so every text pixel keeps the same
+     backdrop it had before the texture existed (re-measured on every
+     screen, both themes — see CLAUDE.md). */
+  --page-bg-opacity: 0.16;
 
   /* Header pilot (client feedback 2026-09-18: lean harder into the one
      accent across the whole app, starting with header/nav + Approvals as
@@ -78,7 +87,7 @@
     --border-strong: #4a4335;
     --text-primary: #f1eae0;
     --text-secondary: #b7ac98;
-    --text-muted: #867c69;
+    --text-muted: #9e9480;
     --accent: #4c9fee;
     --accent-on-tint: #8cc1f5;
     --on-accent: #0b1622;
@@ -88,7 +97,7 @@
     --returning-bg: #3d2317;
     --approved: #8fc195;
     --approved-bg: #22331f;
-    --login-bg-opacity: 0.05;
+    --page-bg-opacity: 0.24;
     --cell-weekend: #2a3237;
     --cell-filled: #2c3944;
     --cell-filled-weekend: #2e4150;
@@ -103,7 +112,7 @@
   --border-strong: #4a4335;
   --text-primary: #f1eae0;
   --text-secondary: #b7ac98;
-  --text-muted: #867c69;
+  --text-muted: #9e9480;
   --accent: #4c9fee;
   --accent-on-tint: #8cc1f5;
   --on-accent: #0b1622;
@@ -113,14 +122,19 @@
   --returning-bg: #3d2317;
   --approved: #8fc195;
   --approved-bg: #22331f;
-  --login-bg-opacity: 0.05;
+  --page-bg-opacity: 0.24;
   --cell-weekend: #2a3237;
   --cell-filled: #2c3944;
   --cell-filled-weekend: #2e4150;
 }
 
 @theme inline {
-  --color-base: var(--base);
+  /* Named `page`, NOT `base`: a `--color-base` theme color makes Tailwind's
+     `text-base` utility apply `color: var(--base)` in addition to its
+     font-size — the class quietly painted status text in the page
+     background color (1.09:1 light / 1.19:1 dark). `text-base` is a normal
+     font-size class everywhere else; it must never also be a color. */
+  --color-page: var(--base);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
@@ -152,20 +166,20 @@ body {
   color: var(--text-primary);
 }
 
-/* Login page only: stretch body/main to fill the viewport so its
-   background texture can span the full remaining height below the
-   header, with the card centered in it — rather than a box sized to the
-   card's own content height. Scoped via body:has() against the
-   data-login-page marker in app/login/page.tsx instead of hardcoding a
-   calc(100vh - <header height>), since header height varies (it wraps
-   at narrow widths). */
-body:has([data-login-page]) {
+/* Textured screens (login + everything except My timesheet): stretch
+   body/main to fill the viewport so the background texture can span the
+   full remaining height below the header — rather than a box sized to the
+   content's own height. Scoped via body:has() against the
+   data-textured-page marker in components/TexturedPage.tsx instead of
+   hardcoding a calc(100vh - <header height>), since header height varies
+   (it wraps at narrow widths). */
+body:has([data-textured-page]) {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
 }
 
-body:has([data-login-page]) main {
+body:has([data-textured-page]) main {
   display: flex;
   flex: 1;
   /* main's own mx-auto/max-w-3xl/px-5/py-8 (from layout.tsx, shared by

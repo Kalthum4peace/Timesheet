@@ -79,8 +79,31 @@ export function approvalTypeLabel(type: ApprovalType, department: Department): s
   return APPROVAL_TYPE_LABEL[type];
 }
 
-export function timesheetStatusLabel(status: TimesheetStatus, department: Department): string {
+// pending_final_review is the one status that can't be named from the enum
+// alone: it covers SPM and HR reviewing in parallel, and either may already
+// be done (approved) or never needed (self-skipped, or Medical where HR is
+// the sole final approver). `stillPending` is which of those approval types
+// the database says are STILL pending right now — see pending_final_approvers
+// (migration 20260918050000) and lib/pendingApprovers.ts. When it's unknown
+// (not fetched yet, or the helper isn't reachable) this falls back to the
+// generic wording rather than guessing a role.
+export function finalReviewLabel(stillPending: ApprovalType[] | undefined): string {
+  if (!stillPending || stillPending.length === 0) return TIMESHEET_STATUS_LABEL.pending_final_review;
+  const spm = stillPending.includes("spm");
+  const hr = stillPending.includes("hr");
+  if (spm && hr) return "Awaiting SPM & HR's Review";
+  if (hr) return "Awaiting HR's Review";
+  if (spm) return "Awaiting SPM's Review";
+  return TIMESHEET_STATUS_LABEL.pending_final_review;
+}
+
+export function timesheetStatusLabel(
+  status: TimesheetStatus,
+  department: Department,
+  stillPendingFinal?: ApprovalType[],
+): string {
   if (status === "pending_department_head") return `Awaiting ${departmentHeadLabel(department)}`;
+  if (status === "pending_final_review") return finalReviewLabel(stillPendingFinal);
   return TIMESHEET_STATUS_LABEL[status];
 }
 

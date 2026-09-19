@@ -28,7 +28,10 @@ const PERSONAS = [
   { key: 'team_lead', email: 'ui-test-teamlead@kalthum-dev.test', full_name: 'Bala UI-Test Team Lead', role: 'team_lead' },
   { key: 'department_head', email: 'ui-test-depthead@kalthum-dev.test', full_name: 'Chidi UI-Test Dept Head', role: 'department_head' },
   { key: 'spm', email: 'ui-test-spm@kalthum-dev.test', full_name: 'Deola UI-Test SPM', role: 'spm' },
-  { key: 'hr', email: 'ui-test-hr@kalthum-dev.test', full_name: 'Efe UI-Test HR', role: 'hr' },
+  // admin_hr, not hr: plain hr is retired for new accounts (client decision,
+  // round 2, 2026-09-18) and this fixture doubles as the demo HR login, so
+  // it needs to reach Add Staff too — one login, both HR and Admin surfaces.
+  { key: 'hr', email: 'ui-test-hr@kalthum-dev.test', full_name: 'Efe UI-Test HR', role: 'admin_hr' },
   // Deliberately has zero relationship to any other fixture's chain — no
   // organizational_assignments row, never named on anyone's approval_steps.
   // Exists to test authorization boundaries (e.g. current_return_recipient

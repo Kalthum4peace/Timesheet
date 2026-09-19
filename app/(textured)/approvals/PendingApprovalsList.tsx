@@ -149,22 +149,24 @@ export function PendingApprovalsList({ userId }: { userId: string }) {
             <li key={item.stepId}>
               <Link
                 href={`/approvals/${item.timesheetId}`}
-                className="flex items-center gap-4 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4 transition-colors hover:border-border-strong hover:border-l-accent-on-tint"
+                className="flex flex-col gap-2 rounded-xl border border-border border-l-4 border-l-accent bg-surface p-4 transition-colors hover:border-border-strong hover:border-l-accent-on-tint sm:flex-row sm:items-center sm:gap-4"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent-on-tint">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{item.staffName}</p>
-                  <p className="text-xs text-text-secondary">
-                    {DEPARTMENT_LABEL[item.department]} · {monthLabel(item.year, item.month)}
-                    {item.cycleNumber > 1 ? ` · Resubmitted (cycle ${item.cycleNumber})` : ""}
-                  </p>
+                <div className="flex flex-1 items-center gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent-on-tint">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.staffName}</p>
+                    <p className="text-xs text-text-secondary">
+                      {DEPARTMENT_LABEL[item.department]} · {monthLabel(item.year, item.month)}
+                      {item.cycleNumber > 1 ? ` · Resubmitted (cycle ${item.cycleNumber})` : ""}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-medium text-text-muted">
+                <span className="pl-14 text-xs font-medium text-text-secondary sm:pl-0 sm:text-right">
                   {approvalTypeLabel(item.approvalType, item.department)} review
                 </span>
               </Link>

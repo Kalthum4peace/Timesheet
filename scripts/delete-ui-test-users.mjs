@@ -42,6 +42,15 @@ const EMAILS = [
   // blocked by the future-month lock. Deleted immediately after use, same
   // discipline as ui-test-outsider above.
   'ui-test-progress@kalthum-dev.test',
+  // Round-2 verification throwaways: created through Add Staff from the
+  // ui-test-hr (admin_hr) login to prove that login reaches Add Staff end to
+  // end. ui-test-hrcheck is the tampered-role attempt that must NEVER exist.
+  'ui-test-addstaff@kalthum-dev.test',
+  'ui-test-hrcheck@kalthum-dev.test',
+  // Medical staff driven to the final-review stage to verify the role-aware
+  // "Awaiting HR's Review" label. Left in place until that verification is
+  // done, then deleted.
+  'ui-test-medfinal@kalthum-dev.test',
 ];
 
 async function main() {

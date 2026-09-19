@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { AttendanceGrid } from "@/components/AttendanceGrid";
+import { StatusPill } from "@/components/StatusPill";
+import { fetchPendingFinalApprovers } from "@/lib/pendingApprovers";
 import {
+  type ApprovalType,
   type AttendanceStatus,
   type Department,
   type TimesheetStatus,
@@ -57,6 +60,9 @@ export function TimesheetForm({ userId }: { userId: string }) {
   // return path has genuinely reached staff (editable), otherwise the id of
   // whichever approver still needs to acknowledge first.
   const [returnRecipient, setReturnRecipient] = useState<string | null>(null);
+  // Which of SPM/HR are still pending — only meaningful at
+  // pending_final_review, drives the role-aware status label.
+  const [pendingFinal, setPendingFinal] = useState<ApprovalType[] | undefined>(undefined);
 
   function goToPreviousMonth() {
     setNotice(null);
@@ -181,7 +187,15 @@ export function TimesheetForm({ userId }: { userId: string }) {
         recipient = recipientId;
       }
 
+      let finalPending: ApprovalType[] | undefined;
+      if (current.status === "pending_final_review") {
+        const byTimesheet = await fetchPendingFinalApprovers(supabase, [current.id]);
+        if (cancelled) return;
+        finalPending = byTimesheet[current.id];
+      }
+
       setFullName(profile.full_name);
+      setPendingFinal(finalPending);
       setTimesheet(current);
       setEntries(
         Object.fromEntries((attendance ?? []).map((row) => [row.date, row.status as AttendanceStatus])),
@@ -274,7 +288,18 @@ export function TimesheetForm({ userId }: { userId: string }) {
       .select("id, staff_id, location, department, month, year, status")
       .eq("id", timesheet.id)
       .single();
-    if (refreshed) setTimesheet(refreshed as Timesheet);
+    if (refreshed) {
+      // An approver-role staff member's own timesheet goes straight to
+      // pending_final_review on submit — the label needs the pending list
+      // right away, not only after a reload.
+      if (refreshed.status === "pending_final_review") {
+        const byTimesheet = await fetchPendingFinalApprovers(supabase, [refreshed.id]);
+        setPendingFinal(byTimesheet[refreshed.id]);
+      } else {
+        setPendingFinal(undefined);
+      }
+      setTimesheet(refreshed as Timesheet);
+    }
     setSubmitting(false);
     setNotice(rpcName === "resubmit_timesheet" ? "Timesheet resubmitted." : "Timesheet submitted.");
   }
@@ -347,7 +372,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-on-tint">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -365,9 +390,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
         <SignOutButton />
       </div>
 
-      <div className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold text-text-primary">
-        {timesheetStatusLabel(timesheet.status, timesheet.department)}
-      </div>
+      <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department, pendingFinal)} />
       {timesheet.status === "returning" && returnRecipient !== null && (
         <p className="text-sm text-text-secondary">
           Still on its way back to you — an earlier approver needs to acknowledge it first.

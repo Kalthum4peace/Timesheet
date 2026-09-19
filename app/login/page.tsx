@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { TexturedPage } from "@/components/TexturedPage";
 
 const APPROVER_ROLES = ["team_lead", "department_head", "spm", "hr", "admin_hr"];
 
@@ -48,45 +49,7 @@ export default function LoginPage() {
   }
 
   return (
-    // data-login-page is a pure CSS hook (see globals.css's
-    // `body:has([data-login-page])` rule) that stretches <body>/<main> to
-    // fill the viewport ONLY while this page is mounted, without touching
-    // layout.tsx — needed because header height varies (it wraps at narrow
-    // widths) so a hardcoded calc() would be wrong at some size.
-    <div
-      data-login-page
-      className="relative isolate flex w-full flex-1 items-center justify-center overflow-hidden px-4 py-8 sm:px-0"
-    >
-      {/* Second (and only other) signature moment besides the header
-          flourish — a quiet, low-opacity texture reserved for this screen,
-          the app's other natural bookend. Spans the full remaining
-          viewport (not just the card's own height) so this reads as one
-          continuous field with no visible edges, faintly present
-          everywhere except under the opaque form card.
-          Deliberately oversized past plain `cover`: the source JPG has a
-          white "Kalthum Foundation For Peace" caption strip across its
-          bottom ~12% — at a narrow/tall viewport (mobile), `cover` alone
-          matches the container height exactly with zero crop margin, so
-          that strip renders as a stray white band. Sizing to at least
-          135% of both viewport dimensions (via max(), so whichever axis
-          is more constrained still clears the strip with margin — ~22%
-          of the image height gets cropped off the bottom at this size,
-          comfortably past the 12% needed) and biasing the vertical
-          anchor toward the top pushes the crop margin toward the bottom,
-          keeping the strip out of frame. Kept deliberately modest (not
-          160%+) so the dove mark itself stays recognizable at mobile
-          widths rather than reading as an abstract line fragment. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          opacity: "var(--login-bg-opacity)",
-          backgroundImage: "url(/kfp-logo.jpg)",
-          backgroundSize: "max(135vw, 135vh)",
-          backgroundPosition: "center 15%",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
+    <TexturedPage variant="center">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6">
         <h1 className="mb-1 text-xl font-semibold">Sign in</h1>
         <p className="mb-6 text-sm text-text-secondary">
@@ -152,6 +115,6 @@ export default function LoginPage() {
           </button>
         </form>
       </div>
-    </div>
+    </TexturedPage>
   );
 }

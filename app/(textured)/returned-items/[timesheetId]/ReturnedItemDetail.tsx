@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AttendanceGrid } from "@/components/AttendanceGrid";
+import { StatusPill } from "@/components/StatusPill";
 import {
   type AttendanceStatus,
   type Department,
@@ -166,7 +167,7 @@ export function ReturnedItemDetail({ userId, timesheetId }: { userId: string; ti
         <SignOutButton />
       </div>
 
-      <p className="text-sm font-medium">{timesheetStatusLabel(timesheet.status, timesheet.department)}</p>
+      <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department)} />
 
       {declineComment && (
         <div className="rounded-xl border border-returning-bg bg-returning-bg p-4">

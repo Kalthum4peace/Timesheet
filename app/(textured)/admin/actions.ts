@@ -5,7 +5,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CreateStaffResult = { ok: true } | { ok: false; error: string };
 
-const VALID_ROLES = ["staff", "team_lead", "department_head", "spm", "hr", "admin", "admin_hr"];
+// "hr" is deliberately absent: plain hr is retired for new accounts (the HR
+// position is always admin_hr now). Enforced here, not just by hiding the
+// option in the form — same rule as the admin-only check below, the UI is
+// never the boundary. Existing hr-role profiles are unaffected; this only
+// governs what this action will create.
+const VALID_ROLES = ["staff", "team_lead", "department_head", "spm", "admin", "admin_hr"];
 
 export async function createStaffMember(
   _prev: CreateStaffResult,
@@ -56,6 +61,29 @@ export async function createStaffMember(
 
   const admin = createAdminClient();
 
+  // generate_approval_chain requires exactly ONE active HR-position profile
+  // (role hr OR admin_hr) and hard-fails every submission at 2, with no
+  // in-app way to recover yet. Checked here, before anything is created, so
+  // a rejection writes nothing. Fails closed if the check itself errors. Not
+  // race-proof (two simultaneous submits could both pass) — a partial unique
+  // index would be, but that's a schema change; this covers the real case.
+  if (role === "admin_hr") {
+    const { count, error: hrCheckError } = await admin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .in("role", ["hr", "admin_hr"])
+      .eq("active", true);
+    if (hrCheckError) {
+      return { ok: false, error: "Couldn't check for an existing HR/Admin account: " + hrCheckError.message };
+    }
+    if ((count ?? 0) > 0) {
+      return {
+        ok: false,
+        error: "An active HR/Admin account already exists — deactivate the existing one first.",
+      };
+    }
+  }
+
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
@@ -77,11 +105,16 @@ export async function createStaffMember(
     // Roll back the auth user so a failed profile insert doesn't leave an
     // orphaned account with no profile behind.
     await admin.auth.admin.deleteUser(created.user.id);
+    // profiles_one_active_hr_position is the database-level backstop for the
+    // check above: it's what rejects the loser when two HR/Admin creations
+    // race past the application check at the same moment.
     return {
       ok: false,
       error: profileError.message.includes("profiles_hr_number_unique")
         ? "That HR number is already assigned to another staff member."
-        : "Couldn't create the profile: " + profileError.message,
+        : profileError.message.includes("profiles_one_active_hr_position")
+          ? "An active HR/Admin account already exists — deactivate the existing one first."
+          : "Couldn't create the profile: " + profileError.message,
     };
   }
 

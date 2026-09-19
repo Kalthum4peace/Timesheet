@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { AttendanceGrid } from "@/components/AttendanceGrid";
+import { StatusPill } from "@/components/StatusPill";
+import { fetchPendingFinalApprovers } from "@/lib/pendingApprovers";
 import {
+  type ApprovalType,
   type AttendanceStatus,
   type Department,
   type TimesheetStatus,
@@ -58,6 +61,7 @@ export function AllTimesheetsDetail({ timesheetId }: { timesheetId: string }) {
   const [timesheet, setTimesheet] = useState<Timesheet | null>(null);
   const [entries, setEntries] = useState<Record<string, AttendanceStatus>>({});
   const [actions, setActions] = useState<ActionRow[]>([]);
+  const [pendingFinal, setPendingFinal] = useState<ApprovalType[] | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,6 +105,14 @@ export function AllTimesheetsDetail({ timesheetId }: { timesheetId: string }) {
         return;
       }
 
+      let finalPending: ApprovalType[] | undefined;
+      if (ts.status === "pending_final_review") {
+        const byTimesheet = await fetchPendingFinalApprovers(supabase, [timesheetId]);
+        if (cancelled) return;
+        finalPending = byTimesheet[timesheetId];
+      }
+
+      setPendingFinal(finalPending);
       setTimesheet(ts as unknown as Timesheet);
       setEntries(
         Object.fromEntries((attendance ?? []).map((row) => [row.date, row.status as AttendanceStatus])),
@@ -158,9 +170,7 @@ export function AllTimesheetsDetail({ timesheetId }: { timesheetId: string }) {
         <SignOutButton />
       </div>
 
-      <p className="rounded-lg border border-border-strong bg-surface-2 px-4 py-2 text-base font-semibold">
-        {timesheetStatusLabel(timesheet.status, timesheet.department)}
-      </p>
+      <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department, pendingFinal)} />
 
       <AttendanceGrid year={timesheet.year} month={timesheet.month} entries={entries} editable={false} />
 
