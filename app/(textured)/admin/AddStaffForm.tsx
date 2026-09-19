@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import { createStaffMember, type CreateStaffResult } from "./actions";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 import { departmentHeadLabel, type Department } from "@/lib/timesheet";
 
 type Profile = { id: string; full_name: string };
@@ -73,7 +72,6 @@ export function AddStaffForm({
             <p className="text-sm text-text-secondary">Create a login for a new team member.</p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       {state.ok ? (

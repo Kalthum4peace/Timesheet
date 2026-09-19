@@ -12,7 +12,6 @@ import {
   DEPARTMENT_LABEL,
   monthLabel,
 } from "@/lib/timesheet";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 
 type RawStep = {
   id: string;
@@ -131,7 +130,6 @@ export function PendingApprovalsList({ userId }: { userId: string }) {
             <p className="text-sm text-text-secondary">Items waiting on your review right now.</p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}

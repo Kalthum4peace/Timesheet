@@ -10,7 +10,6 @@ import {
   DEPARTMENT_LABEL,
   timesheetStatusLabel,
 } from "@/lib/timesheet";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 
 type Role = "team_lead" | "department_head" | "spm" | "hr" | "admin_hr";
 
@@ -195,7 +194,6 @@ export function RosterList({ userId, role }: { userId: string; role: Role }) {
             </p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       <div className="flex flex-wrap gap-3">

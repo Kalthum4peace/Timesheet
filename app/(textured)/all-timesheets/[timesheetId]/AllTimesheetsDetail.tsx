@@ -15,7 +15,6 @@ import {
   DEPARTMENT_LABEL,
   monthLabel,
 } from "@/lib/timesheet";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 
 type Timesheet = {
   id: string;
@@ -167,7 +166,6 @@ export function AllTimesheetsDetail({ timesheetId }: { timesheetId: string }) {
             </p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department, pendingFinal)} />

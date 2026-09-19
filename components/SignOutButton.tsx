@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Rendered exactly ONCE, in the shared header (app/layout.tsx) — never per
+// page. Outlined white on the brand-blue bar: label is full white (4.99:1),
+// outline is white at 85% (4.04:1 — a control boundary needs 3:1). Deliberately
+// an outline, not a filled pill, so it can't be mistaken for the white
+// active-nav pill it sits above.
 export function SignOutButton() {
   const router = useRouter();
 
@@ -13,16 +18,11 @@ export function SignOutButton() {
     router.refresh();
   }
 
-  // Outlined, icon-led button rather than a bare text link: it sits in the
-  // page content next to a header full of nav links, and the two must never
-  // read as the same kind of control. Border uses text-secondary (not the
-  // faint border tokens) so the button's shape is actually visible against
-  // the page — same lesson as the status pill.
   return (
     <button
       type="button"
       onClick={handleSignOut}
-      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-text-secondary bg-surface px-3 py-1.5 text-sm font-medium text-text-primary outline-none transition-colors hover:border-accent hover:text-accent-on-tint focus-visible:ring-2 focus-visible:ring-accent/40"
+      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-on-header/85 px-3 py-1.5 text-sm font-medium text-on-header outline-none transition-colors hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white/70"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

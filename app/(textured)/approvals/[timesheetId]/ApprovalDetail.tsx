@@ -17,7 +17,6 @@ import {
   APPROVAL_TYPE_ACTIVE_STATUS,
   monthLabel,
 } from "@/lib/timesheet";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 
 type Timesheet = {
   id: string;
@@ -229,7 +228,6 @@ export function ApprovalDetail({ userId, timesheetId }: { userId: string; timesh
             </p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department, pendingFinal)} />

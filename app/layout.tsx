@@ -4,6 +4,7 @@ import Image from "next/image";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { HeaderNav } from "@/components/HeaderNav";
+import { SignOutButton } from "@/components/SignOutButton";
 
 const workSans = Work_Sans({
   subsets: ["latin"],
@@ -64,7 +65,12 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${workSans.variable} font-sans antialiased`}>
         <header className="bg-header-bg">
-          <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
+          {/* Two tiers at every width: row 1 = brand (left) + Sign out
+              (right); row 2 = the nav links, full width. Sign out lives here
+              once, globally, so it reads as "always here, top of screen" on
+              desktop and mobile alike instead of being repeated in every
+              page's content header. */}
+          <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
             <Image
               src="/kfp-logo-mark.jpg"
               alt="Kalthum Foundation for Peace"
@@ -94,6 +100,11 @@ export default async function RootLayout({
                 />
               </svg>
             </div>
+            {user && (
+              <div className="ml-auto">
+                <SignOutButton />
+              </div>
+            )}
             {user && <HeaderNav items={navItems} />}
           </div>
         </header>

@@ -16,7 +16,6 @@ import {
   dateKey,
   monthLabel,
 } from "@/lib/timesheet";
-import { SignOutButton } from "./SignOutButton";
 
 type Timesheet = {
   id: string;
@@ -333,7 +332,6 @@ export function TimesheetForm({ userId }: { userId: string }) {
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between">
           {monthNav}
-          <SignOutButton />
         </div>
         <p className="text-sm text-text-secondary">Loading…</p>
       </div>
@@ -345,7 +343,6 @@ export function TimesheetForm({ userId }: { userId: string }) {
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between">
           {monthNav}
-          <SignOutButton />
         </div>
         <p className="text-sm text-returning">{error}</p>
       </div>
@@ -357,7 +354,6 @@ export function TimesheetForm({ userId }: { userId: string }) {
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between">
           {monthNav}
-          <SignOutButton />
         </div>
         <p className="text-sm text-text-secondary">
           {isCurrentMonth
@@ -387,7 +383,6 @@ export function TimesheetForm({ userId }: { userId: string }) {
             </p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       <StatusPill label={timesheetStatusLabel(timesheet.status, timesheet.department, pendingFinal)} />

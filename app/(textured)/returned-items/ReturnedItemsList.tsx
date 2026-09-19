@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { type Department, DEPARTMENT_LABEL, monthLabel } from "@/lib/timesheet";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 
 type Candidate = {
   id: string;
@@ -98,7 +97,6 @@ export function ReturnedItemsList({ userId }: { userId: string }) {
             <p className="text-sm text-text-secondary">Waiting on your acknowledgment before they move on.</p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       {loading && <p className="text-sm text-text-secondary">Loading…</p>}

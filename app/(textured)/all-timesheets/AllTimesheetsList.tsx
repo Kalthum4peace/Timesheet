@@ -11,7 +11,6 @@ import {
   timesheetStatusLabel,
   monthLabel,
 } from "@/lib/timesheet";
-import { SignOutButton } from "@/app/timesheet/SignOutButton";
 
 type Row = {
   id: string;
@@ -116,7 +115,6 @@ export function AllTimesheetsList() {
             <p className="text-sm text-text-secondary">Every timesheet across every department.</p>
           </div>
         </div>
-        <SignOutButton />
       </div>
 
       <div className="flex flex-wrap gap-3">

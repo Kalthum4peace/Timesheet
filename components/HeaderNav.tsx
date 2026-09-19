@@ -19,7 +19,11 @@ export function HeaderNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
-    <nav className="ml-auto flex flex-wrap items-center justify-end gap-1 text-sm font-medium">
+    // -mx-3 cancels the pills' own px-3 so the link TEXT lines up with the
+    // logo's left edge instead of sitting indented; the active pill's white
+    // highlight bleeds into the header's side gutter (20px) by 12px. The
+    // extra 1.5rem of width is also what lets three links fit per row at 375px.
+    <nav className="-mx-3 flex w-[calc(100%+1.5rem)] flex-wrap items-center gap-1 text-sm font-medium">
       {items.map((item) => {
         const active = isActive(pathname, item.href);
         return (
