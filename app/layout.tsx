@@ -33,8 +33,14 @@ export default async function RootLayout({
   let isHr = false;
   let canAccessAdmin = false;
   let hasNoTimesheetOfOwn = false;
+  let mustChangePassword = false;
   if (user) {
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, must_change_password")
+      .eq("id", user.id)
+      .single();
+    mustChangePassword = !!profile?.must_change_password;
     canApprove = !!profile && APPROVER_ROLES.includes(profile.role);
     // admin_hr carries both boundaries at once: it sees the HR surfaces
     // (All timesheets) AND the Admin surface, but — unlike plain admin — it
@@ -50,7 +56,15 @@ export default async function RootLayout({
   // branch, which DOES cover admin_hr) has no timesheet chain of its own,
   // per PROJECT_CONTEXT's admin/approval separation, so "My timesheet"
   // would only lead to a dead end for a plain admin.
-  const navItems = user
+  // While the mandatory first-login password change is pending, the only
+  // place they can go is /change-password (middleware enforces that), so the
+  // nav is withheld entirely rather than offering links that just bounce.
+  // Everyone else gets "Change password" as the last nav item, rendered as an
+  // icon-only pill on phones (labelled from sm up). As a full text link it
+  // wrapped onto a lonely third row for an HR/Admin login (142px -> 178px
+  // header at 375px); as a top-bar button beside Sign out it pushed Sign out
+  // onto its own row (188px). The icon pill fits in the spare room on row 2.
+  const navItems = user && !mustChangePassword
     ? [
         ...(!hasNoTimesheetOfOwn ? [{ href: "/timesheet", label: "My timesheet" }] : []),
         ...(canApprove ? [{ href: "/approvals", label: "Approvals" }] : []),
@@ -58,6 +72,7 @@ export default async function RootLayout({
         ...(canApprove ? [{ href: "/roster", label: "Staff roster" }] : []),
         ...(isHr ? [{ href: "/all-timesheets", label: "All timesheets" }] : []),
         ...(canAccessAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+        { href: "/change-password", label: "Change password", icon: "lock" as const },
       ]
     : [];
 
@@ -105,7 +120,7 @@ export default async function RootLayout({
                 <SignOutButton />
               </div>
             )}
-            {user && <HeaderNav items={navItems} />}
+            {user && navItems.length > 0 && <HeaderNav items={navItems} />}
           </div>
         </header>
         <main className="mx-auto max-w-3xl px-5 py-8">{children}</main>

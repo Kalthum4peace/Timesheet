@@ -146,10 +146,15 @@ async function main() {
     const r = await as.spm1.rpc('decline_timesheet', { p_timesheet_id: ts.id, p_comment: 'Please clarify entry for the 10th.' });
     record('SPM decline succeeds (no prior approval needed for this test)', !r.error, r.error?.message);
 
+    // Since migration 20260919030000 the empty-path case notifies staff with the
+    // richer 'declined' notification (who/stage/comment, "already back with you")
+    // INSTEAD of the old generic 'returned' one, so staff never get two emails.
+    const declinedNotifs = await notificationsFor(ts.id, 'declined');
+    record('Exactly 1 "declined" notification, recipient = staff DIRECTLY (empty path, no intermediate)',
+      declinedNotifs.length === 1 && declinedNotifs[0].recipient_id === teamLeadOwn.id,
+      JSON.stringify(declinedNotifs.map(n => n.recipient_id)));
     const returnedNotifs = await notificationsFor(ts.id, 'returned');
-    record('Exactly 1 "returned" notification, recipient = staff DIRECTLY (empty path, no intermediate)',
-      returnedNotifs.length === 1 && returnedNotifs[0].recipient_id === teamLeadOwn.id,
-      JSON.stringify(returnedNotifs.map(n => n.recipient_id)));
+    record('...and NO "returned" notification exists for it (no double-up)', returnedNotifs.length === 0, String(returnedNotifs.length));
 
     const { data: cycleRows } = await admin.from('approval_steps').select('cycle_number').eq('timesheet_id', ts.id).limit(1).single();
     const { data: hop } = await admin.rpc('next_return_recipient', { p_timesheet_id: ts.id, p_cycle: cycleRows.cycle_number, p_from_step_order: 1 });

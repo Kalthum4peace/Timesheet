@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { deactivateStaff, type DeactivateResult } from "@/lib/staffAdmin";
 
 export type CreateStaffResult = { ok: true } | { ok: false; error: string };
 
@@ -100,6 +102,9 @@ export async function createStaffMember(
     hr_number: hrNumber || null,
     location,
     role,
+    // Explicit even though the column now defaults to true: the first
+    // sign-in with this temporary password must force a new one.
+    must_change_password: true,
   });
   if (profileError) {
     // Roll back the auth user so a failed profile insert doesn't leave an
@@ -137,5 +142,15 @@ export async function createStaffMember(
     }
   }
 
+  revalidatePath("/admin");
   return { ok: true };
+}
+
+// Thin wrapper: every rule (admin-only, no self-deactivation, in-flight work
+// guard, flag + login ban with rollback) lives in lib/staffAdmin.ts so the
+// exact same code is what scripts/test-deactivate.mjs exercises.
+export async function deactivateStaffMember(targetId: string): Promise<DeactivateResult> {
+  const result = await deactivateStaff(await createClient(), createAdminClient(), targetId);
+  if (result.ok) revalidatePath("/admin");
+  return result;
 }

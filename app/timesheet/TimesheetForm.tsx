@@ -55,6 +55,8 @@ export function TimesheetForm({ userId }: { userId: string }) {
   const [fullName, setFullName] = useState("");
   const [timesheet, setTimesheet] = useState<Timesheet | null>(null);
   const [entries, setEntries] = useState<Record<string, AttendanceStatus>>({});
+  // date key -> holiday name(s), national and organisation scope merged.
+  const [holidays, setHolidays] = useState<Record<string, string>>({});
   // Only meaningful when timesheet.status === 'returning': null once the
   // return path has genuinely reached staff (editable), otherwise the id of
   // whichever approver still needs to acknowledge first.
@@ -171,6 +173,21 @@ export function TimesheetForm({ userId }: { userId: string }) {
         return;
       }
 
+      // Public holidays for the viewed month. Purely helpful: if this read
+      // fails the sheet still works, just without the suggestions.
+      const { data: holidayRows } = await supabase
+        .from("public_holidays")
+        .select("date, name")
+        .gte("date", dateKey(viewYear, viewMonth, 1))
+        .lte("date", dateKey(viewYear, viewMonth, daysInMonth(viewYear, viewMonth)));
+      if (cancelled) return;
+      const holidayNames: Record<string, string[]> = {};
+      for (const row of holidayRows ?? []) {
+        const names = (holidayNames[row.date] ??= []);
+        if (!names.includes(row.name)) names.push(row.name);
+      }
+      const holidayMap = Object.fromEntries(Object.entries(holidayNames).map(([d, names]) => [d, names.join(" / ")]));
+
       let recipient: string | null = null;
       if (current.status === "returning") {
         const { data: recipientId, error: recipientError } = await supabase.rpc(
@@ -196,9 +213,22 @@ export function TimesheetForm({ userId }: { userId: string }) {
       setFullName(profile.full_name);
       setPendingFinal(finalPending);
       setTimesheet(current);
-      setEntries(
-        Object.fromEntries((attendance ?? []).map((row) => [row.date, row.status as AttendanceStatus])),
+      const loaded: Record<string, AttendanceStatus> = Object.fromEntries(
+        (attendance ?? []).map((row) => [row.date, row.status as AttendanceStatus]),
       );
+      // Suggest PH on holidays the staff member hasn't filled in — but only
+      // while the sheet is actually editable, and never over a day they (or
+      // an earlier save) already set. It is a starting value, not a lock:
+      // it isn't saved until they save, and they can change it.
+      const editableNow =
+        current.status === "draft" || (current.status === "returning" && recipient === null);
+      if (editableNow) {
+        for (const date of Object.keys(holidayMap)) {
+          if (!(date in loaded)) loaded[date] = "public_holiday";
+        }
+      }
+      setHolidays(holidayMap);
+      setEntries(loaded);
       setReturnRecipient(recipient);
       setLoading(false);
     }
@@ -398,6 +428,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
         entries={entries}
         editable={editable}
         onChange={setDay}
+        holidays={holidays}
       />
 
       {error && <p className="text-sm text-returning">{error}</p>}

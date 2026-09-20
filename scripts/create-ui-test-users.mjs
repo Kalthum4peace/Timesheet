@@ -55,6 +55,9 @@ async function findOrCreate(persona) {
   const id = data.user.id;
   const { error: profErr } = await admin.from('profiles').insert({
     id, full_name: persona.full_name, email: persona.email, location: 'Maiduguri', role: persona.role,
+    // The column defaults to true for new profiles; standing dev fixtures share
+    // a known password and must not be gated behind a change-password screen.
+    must_change_password: false,
   });
   if (profErr) throw new Error(`profiles insert(${persona.email}): ${profErr.message}`);
   console.log(`created — ${persona.email} (${id})`);

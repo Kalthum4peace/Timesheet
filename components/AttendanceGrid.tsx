@@ -27,6 +27,9 @@ const WEEKEND_COLUMNS = new Set([5, 6]);
 // values, not assumed. Contrast verified for every tier against both
 // text-primary and text-secondary, light and dark (worst case 4.6:1, still
 // clears AA 4.5:1).
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const monthShort = (month: number) => MONTH_SHORT[month - 1];
+
 function cellBackground(filled: boolean, isWeekend: boolean) {
   if (filled) return isWeekend ? "bg-cell-filled-weekend" : "bg-cell-filled";
   return isWeekend ? "bg-cell-weekend" : "bg-surface-2";
@@ -38,13 +41,17 @@ export function AttendanceGrid({
   entries,
   editable,
   onChange,
+  holidays,
 }: {
   year: number;
   month: number;
   entries: Record<string, AttendanceStatus>;
   editable: boolean;
   onChange?: (day: number, status: AttendanceStatus) => void;
+  // date key -> holiday name(s). Optional: the approver views don't pass it.
+  holidays?: Record<string, string>;
 }) {
+  const holidayDates = Object.keys(holidays ?? {}).sort();
   const totalDays = daysInMonth(year, month);
   const leadingBlanks = leadingBlanksForMonth(year, month);
   const filledDays = Object.keys(entries).length;
@@ -67,12 +74,19 @@ export function AttendanceGrid({
             const status = entries[key];
             const column = (leadingBlanks + day - 1) % 7;
             const isWeekend = WEEKEND_COLUMNS.has(column);
+            const holidayName = holidays?.[key];
             return (
               <div
                 key={day}
+                title={holidayName ? `Public holiday: ${holidayName}` : undefined}
                 className={`flex flex-col items-center gap-1 rounded-lg p-1.5 transition-colors ${cellBackground(!!status, isWeekend)}`}
               >
-                <span className="text-xs font-medium text-text-secondary">{day}</span>
+                <span className="flex items-center gap-1 text-xs font-medium text-text-secondary">
+                  {day}
+                  {holidayName && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" role="img" aria-label={`Public holiday: ${holidayName}`} />
+                  )}
+                </span>
                 <span className="text-sm font-bold leading-none text-text-primary" aria-hidden="true">
                   {status ? STATUS_CODE[status] : "–"}
                 </span>
@@ -105,6 +119,23 @@ export function AttendanceGrid({
             <span className="whitespace-nowrap text-xs font-medium text-text-secondary">
               {filledDays} of {totalDays} days filled
             </span>
+          </div>
+        )}
+
+        {holidayDates.length > 0 && (
+          <div className="mt-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs text-text-secondary">
+            <p className="flex items-center gap-1.5 font-semibold text-text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+              Public holidays this month
+            </p>
+            <ul className="mt-1">
+              {holidayDates.map((key) => (
+                <li key={key}>
+                  {Number(key.slice(8))} {monthShort(month)} — {holidays![key]}
+                </li>
+              ))}
+            </ul>
+            {editable && <p className="mt-1">Days you haven&apos;t filled in on a holiday start as PH — change it if you worked.</p>}
           </div>
         )}
 

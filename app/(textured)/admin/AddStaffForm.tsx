@@ -81,8 +81,8 @@ export function AddStaffForm({
             <path d="m9 12 2 2 4-4" />
           </svg>
           <p className="text-sm text-approved">
-            Account created. Share the temporary password with them directly — they can change it after
-            signing in.
+            Account created. Share the temporary password with them directly — the first time they
+            sign in they&apos;ll be asked to replace it with one of their own.
           </p>
         </div>
       ) : (
