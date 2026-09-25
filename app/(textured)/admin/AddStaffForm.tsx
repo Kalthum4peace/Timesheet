@@ -55,6 +55,9 @@ export function AddStaffForm({
   const [role, setRole] = useState("staff");
   const [department, setDepartment] = useState<Department | "">("");
   const departmentHeadFieldLabel = department ? departmentHeadLabel(department) : "Department head";
+  // Operations has no team lead / department head layer (staff go straight to
+  // SPM + HR), so both may be left blank there. Medical requires both.
+  const reportingOptional = department === "operations";
 
   return (
     <div className="flex flex-col gap-6">
@@ -195,9 +198,9 @@ export function AddStaffForm({
                   <label htmlFor="teamLeadId" className="text-sm font-medium">
                     Team lead
                   </label>
-                  <select id="teamLeadId" name="teamLeadId" defaultValue="" required className={inputClass}>
-                    <option value="" disabled>
-                      Select a team lead
+                  <select id="teamLeadId" name="teamLeadId" defaultValue="" required={!reportingOptional} className={inputClass}>
+                    <option value="" disabled={!reportingOptional}>
+                      {reportingOptional ? "None — goes straight to SPM and HR" : "Select a team lead"}
                     </option>
                     {teamLeads.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -215,11 +218,13 @@ export function AddStaffForm({
                     id="departmentHeadId"
                     name="departmentHeadId"
                     defaultValue=""
-                    required
+                    required={!reportingOptional}
                     className={inputClass}
                   >
-                    <option value="" disabled>
-                      Select a {departmentHeadFieldLabel.toLowerCase()}
+                    <option value="" disabled={!reportingOptional}>
+                      {reportingOptional
+                        ? "None — goes straight to SPM and HR"
+                        : `Select a ${departmentHeadFieldLabel.toLowerCase()}`}
                     </option>
                     {departmentHeads.map((p) => (
                       <option key={p.id} value={p.id}>

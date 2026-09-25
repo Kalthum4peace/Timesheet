@@ -57,8 +57,24 @@ export async function createStaffMember(
   if (!VALID_ROLES.includes(role)) {
     return { ok: false, error: "Invalid role." };
   }
-  if (role === "staff" && (!department || !teamLeadId || !departmentHeadId)) {
-    return { ok: false, error: "Staff members need a department, team lead, and department head." };
+  if (role === "staff") {
+    if (!department) {
+      return { ok: false, error: "Staff members need a department." };
+    }
+    // Operations has no team lead / department head layer: its staff route
+    // straight to SPM + HR (generate_approval_chain, 20260925000000). Both
+    // blank is valid there; exactly one is not, because the chain rule would
+    // silently drop the one that was chosen. Medical always needs both.
+    if (department === "operations") {
+      if (!teamLeadId !== !departmentHeadId) {
+        return {
+          ok: false,
+          error: "Operations staff need either both a team lead and a department head, or neither.",
+        };
+      }
+    } else if (!teamLeadId || !departmentHeadId) {
+      return { ok: false, error: "Staff members need a department, team lead, and department head." };
+    }
   }
 
   const admin = createAdminClient();
@@ -126,8 +142,8 @@ export async function createStaffMember(
   if (role === "staff") {
     const { error: assignmentError } = await admin.from("organizational_assignments").insert({
       staff_id: created.user.id,
-      team_lead_id: teamLeadId,
-      department_head_id: departmentHeadId,
+      team_lead_id: teamLeadId || null,
+      department_head_id: departmentHeadId || null,
       department,
       effective_from: new Date().toISOString().slice(0, 10),
       created_by: user.id,
