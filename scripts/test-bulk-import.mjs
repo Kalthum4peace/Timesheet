@@ -86,7 +86,7 @@ try {
   if (!tl || !dh || !hr || hr.role !== 'admin_hr' || !hr.active) throw new Error('dev fixtures missing/inactive (need ui-test-teamlead, ui-test-depthead, active admin_hr ui-test-hr)');
   const base = ['--confirm-host', HOST, '--created-by', hr.id];
   const row = (n, e, tlId = tl.id, dhId = dh.id, extra = {}) =>
-    `${n},${e},${extra.pos ?? 'TRIAGER'},${extra.loc ?? 'MAIDUGURI'},${extra.role ?? 'staff'},medical,${tlId},${dhId}`;
+    `${n},${e},${extra.pos ?? 'TRIAGER'},${extra.loc ?? 'MAIDUGURI'},${extra.role ?? 'staff'},${extra.dept ?? 'medical'},${tlId},${dhId}`;
 
   await cleanup();
 
@@ -177,6 +177,35 @@ try {
   check('F4 credentials file lists exactly the 2 created people (not the failed one)', credLines.length === 3 && !credLines.join('\n').includes('-bad-'), String(credLines.length));
   check('F5 the failed row left no orphan login or profile behind',
     !(await q(badEmail)) && !(await admin.auth.admin.listUsers({ perPage: 1000 })).data.users.some((u) => (u.email ?? '') === badEmail));
+
+  // ---------- 6. reporting-line rule (20260926000000): Medical team lead optional ----------
+  const csv3 = writeCsv('three.csv', [
+    row('Direct Report', 'bulk-test-i' + DOMAIN, '', dh.id),                       // medical, no team lead  -> CREATE
+    row('No Head', 'bulk-test-j' + DOMAIN, tl.id, ''),                             // medical, no dept head  -> INVALID
+    row('Neither', 'bulk-test-k' + DOMAIN, '', ''),                                // medical, both blank    -> INVALID
+    row('Ops None', 'bulk-test-l' + DOMAIN, '', '', { dept: 'operations' }),       // operations, both blank -> CREATE
+    row('Ops Half', 'bulk-test-m' + DOMAIN, tl.id, '', { dept: 'operations' }),    // operations, one blank  -> INVALID
+    row('Normal Med', 'bulk-test-n' + DOMAIN),                                     // medical, both set      -> CREATE (regression)
+  ]);
+  const pBefore3 = await profileCount(), aBefore3 = await authCount();
+  const d3 = run(['--csv', csv3, ...base]);
+  check('R1 dry run: 3 would be created (blank-TL medical, blank/blank operations, normal medical), 3 invalid', d3.out.includes('3 would be CREATED, 0 already EXIST (untouched), 3 INVALID'), d3.out.match(/Summary:.*/)?.[0]);
+  check('R2 blank-team-lead Medical row shows "(none)" and the direct-report note, not a UUID error', d3.out.includes('no team lead: reports directly to the department head') && !d3.out.includes('team_lead_id is not a UUID'));
+  check('R3 Medical with no department head is rejected with the medical message', d3.out.includes('Medical staff need a department head'));
+  check('R4 Operations with exactly one blank is rejected with the pair message', d3.out.includes('Operations staff need either both a team lead and a department head, or neither.'));
+  check('R5 report groups the blank-TL person under "NO TEAM LEAD"', d3.out.includes('NO TEAM LEAD (reports directly to the department head)'));
+  check('R6 that dry run wrote nothing', (await profileCount()) === pBefore3 && (await authCount()) === aBefore3);
+  const cred4 = join(tmp, 'cred4.csv');
+  const e3 = run(['--csv', csv3, ...base, '--execute', '--expect-create', '3', '--credentials-out', cred4]);
+  for (const em of ['i', 'l', 'n']) createdEmails.add('bulk-test-' + em + DOMAIN);
+  check('R7 execute: 3 created, 0 failed, every row passes the fresh-read verification (blank compared as NULL)', e3.code === 0 && e3.out.includes('RESULT: 3 created, 0 failed') && e3.out.includes('all created rows verified.'), e3.out.slice(-600));
+  const pI = await q('bulk-test-i' + DOMAIN), pL = await q('bulk-test-l' + DOMAIN), pN = await q('bulk-test-n' + DOMAIN);
+  const oa = async (p) => (await admin.from('organizational_assignments').select('department, team_lead_id, department_head_id, effective_to').eq('staff_id', p.id)).data;
+  const [oI, oL, oN] = [await oa(pI), await oa(pL), await oa(pN)];
+  check('R8 blank-TL Medical: assignment medical, team_lead_id NULL, department_head_id = dh', oI.length === 1 && oI[0].department === 'medical' && oI[0].team_lead_id === null && oI[0].department_head_id === dh.id && oI[0].effective_to === null, JSON.stringify(oI));
+  check('R9 Operations blank/blank: both NULL (unchanged behaviour)', oL.length === 1 && oL[0].department === 'operations' && oL[0].team_lead_id === null && oL[0].department_head_id === null, JSON.stringify(oL));
+  check('R10 normal Medical (both set): unchanged - both ids stored', oN.length === 1 && oN[0].team_lead_id === tl.id && oN[0].department_head_id === dh.id, JSON.stringify(oN));
+  check('R11 the invalid rows created nothing', !(await q('bulk-test-j' + DOMAIN)) && !(await q('bulk-test-k' + DOMAIN)) && !(await q('bulk-test-m' + DOMAIN)));
 } finally {
   await cleanup();
   const { data: left } = await admin.from('profiles').select('id').like('email', 'bulk-test-%');

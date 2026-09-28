@@ -56,8 +56,17 @@ export function AddStaffForm({
   const [department, setDepartment] = useState<Department | "">("");
   const departmentHeadFieldLabel = department ? departmentHeadLabel(department) : "Department head";
   // Operations has no team lead / department head layer (staff go straight to
-  // SPM + HR), so both may be left blank there. Medical requires both.
+  // SPM + HR), so both may be left blank there (as a pair — see
+  // reportingLineError). Medical is asymmetric: the department head is
+  // required, the team lead is optional (blank = reports directly to the
+  // department head). The server re-checks all of this; these props only shape
+  // the form.
   const reportingOptional = department === "operations";
+  const teamLeadPlaceholder = reportingOptional
+    ? "None — goes straight to SPM and HR"
+    : department === "medical"
+      ? `None — reports directly to the ${departmentHeadFieldLabel.toLowerCase()}`
+      : "None";
 
   return (
     <div className="flex flex-col gap-6">
@@ -197,11 +206,10 @@ export function AddStaffForm({
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="teamLeadId" className="text-sm font-medium">
                     Team lead
+                    <span className="ml-1 font-normal text-text-muted">(optional)</span>
                   </label>
-                  <select id="teamLeadId" name="teamLeadId" defaultValue="" required={!reportingOptional} className={inputClass}>
-                    <option value="" disabled={!reportingOptional}>
-                      {reportingOptional ? "None — goes straight to SPM and HR" : "Select a team lead"}
-                    </option>
+                  <select id="teamLeadId" name="teamLeadId" defaultValue="" className={inputClass}>
+                    <option value="">{teamLeadPlaceholder}</option>
                     {teamLeads.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.full_name}

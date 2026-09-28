@@ -18,6 +18,9 @@
 //
 // CSV columns: Name, Email, Position, Location, role, department,
 // team_lead_id, department_head_id.
+//   team_lead_id may be BLANK for Medical (staff who report directly to the
+//   department head); department_head_id is required for Medical. Operations:
+//   both blank or both set. Rule lives in lib/createStaff.ts reportingLineError.
 //   Position has no home: profiles has no position / job-title column and the
 //   Add Staff form has no such field. It is shown in the report so nothing is
 //   lost from view, but it is NOT stored.
@@ -54,7 +57,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync, openSync, writeSync, fsyncSync, closeSync } from 'node:fs';
 import { randomInt } from 'node:crypto';
 import { resolve, relative, isAbsolute } from 'node:path';
-import { createStaffAccount } from '../lib/createStaff.ts';
+import { createStaffAccount, reportingLineError } from '../lib/createStaff.ts';
 
 class Refusal extends Error {}
 const fail = (msg) => {
@@ -222,9 +225,18 @@ async function main() {
       else seenEmails.set(r.email, r.line);
     }
 
+    // Same rule the Add Staff form enforces (lib/createStaff.ts): Medical needs a
+    // department head and the team lead is optional; Operations is both-or-neither.
+    // A blank cell means "none"; anything non-blank must resolve.
+    if (['medical', 'operations'].includes(r.department)) {
+      const reportingError = reportingLineError(r.department, r.teamLeadId, r.departmentHeadId);
+      if (reportingError) problems.push(reportingError);
+    }
     const tl = UUID_RE.test(r.teamLeadId) ? byId.get(r.teamLeadId) : undefined;
     const dh = UUID_RE.test(r.departmentHeadId) ? byId.get(r.departmentHeadId) : undefined;
-    if (!UUID_RE.test(r.teamLeadId)) problems.push('team_lead_id is not a UUID');
+    if (r.teamLeadId === '') {
+      notes.push('no team lead: reports directly to the department head');
+    } else if (!UUID_RE.test(r.teamLeadId)) problems.push('team_lead_id is not a UUID');
     else if (!tl) problems.push(`team_lead_id ${r.teamLeadId} is not a profile on ${host}`);
     else {
       if (tl.role !== 'team_lead') problems.push(`team lead "${tl.full_name}" has role ${tl.role}, not team_lead`);
@@ -233,7 +245,9 @@ async function main() {
         notes.push(`location differs from team lead's (${tl.location})`);
       }
     }
-    if (!UUID_RE.test(r.departmentHeadId)) problems.push('department_head_id is not a UUID');
+    if (r.departmentHeadId === '') {
+      // blank is reported by reportingLineError above where the department requires it
+    } else if (!UUID_RE.test(r.departmentHeadId)) problems.push('department_head_id is not a UUID');
     else if (!dh) problems.push(`department_head_id ${r.departmentHeadId} is not a profile on ${host}`);
     else {
       if (dh.role !== 'department_head') problems.push(`department head "${dh.full_name}" has role ${dh.role}, not department_head`);
@@ -274,8 +288,8 @@ async function main() {
         clip(e.email, 34),
         clip(e.position, 18),
         clip(e.location, 13),
-        clip(e.tl ? e.tl.full_name : '??? ' + e.teamLeadId.slice(0, 8), 24),
-        clip(e.dh ? e.dh.full_name : '??? ' + e.departmentHeadId.slice(0, 8), 22),
+        clip(e.tl ? e.tl.full_name : e.teamLeadId === '' ? '(none)' : '??? ' + e.teamLeadId.slice(0, 8), 24),
+        clip(e.dh ? e.dh.full_name : e.departmentHeadId === '' ? '(none)' : '??? ' + e.departmentHeadId.slice(0, 8), 22),
         e.status,
       ].join(' '),
     );
@@ -286,7 +300,7 @@ async function main() {
 
   const groups = new Map();
   for (const e of evaluated) {
-    const k = e.tl ? `${e.tl.full_name} (${e.tl.location}) — ${e.teamLeadId}` : `UNRESOLVED ${e.teamLeadId}`;
+    const k = e.tl ? `${e.tl.full_name} (${e.tl.location}) — ${e.teamLeadId}` : e.teamLeadId === '' ? 'NO TEAM LEAD (reports directly to the department head)' : `UNRESOLVED ${e.teamLeadId}`;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(e);
   }
@@ -382,7 +396,7 @@ async function main() {
     const { data: pf } = await admin.from('profiles').select('role, must_change_password, location, active').eq('id', res.userId).single();
     const a = oa?.[0];
     const good =
-      !oaErr && oa?.length === 1 && a.department === e.department && a.team_lead_id === e.teamLeadId && a.department_head_id === e.departmentHeadId &&
+      !oaErr && oa?.length === 1 && a.department === e.department && a.team_lead_id === (e.teamLeadId || null) && a.department_head_id === (e.departmentHeadId || null) &&
       a.effective_to === null && a.effective_from === today && a.created_by === args['created-by'] &&
       pf?.role === 'staff' && pf?.must_change_password === true && pf?.active === true && pf?.location === e.location;
     if (!good) {
