@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AttendanceGrid } from "@/components/AttendanceGrid";
 import { StatusPill } from "@/components/StatusPill";
 import { fetchPendingFinalApprovers } from "@/lib/pendingApprovers";
+import { leadershipDepartment } from "@/lib/ownTimesheetDepartment";
 import {
   type ApprovalType,
   type AttendanceStatus,
@@ -91,7 +92,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("full_name, location")
+        .select("full_name, location, role")
         .eq("id", userId)
         .single();
       if (cancelled) return;
@@ -121,17 +122,25 @@ export function TimesheetForm({ userId }: { userId: string }) {
       // navigating to a browsed past/future month should never spontaneously
       // create a stray timesheet row just because none exists yet.
       if (!current && isCurrentMonth) {
-        const { data: assignment, error: assignmentError } = await supabase
-          .from("organizational_assignments")
-          .select("department")
-          .eq("staff_id", userId)
-          .is("effective_to", null)
-          .maybeSingle();
-        if (cancelled) return;
-        if (assignmentError || !assignment) {
-          setError("You don't have a current department assignment yet — ask your administrator.");
-          setLoading(false);
-          return;
+        // Leaders (team lead, department head, SPM, HR/Admin) have no
+        // assignment row and don't need one — their department is fixed by
+        // role (lib/ownTimesheetDepartment.ts). Everyone else, staff above
+        // all, still needs a real assignment.
+        let department = leadershipDepartment(profile.role);
+        if (!department) {
+          const { data: assignment, error: assignmentError } = await supabase
+            .from("organizational_assignments")
+            .select("department")
+            .eq("staff_id", userId)
+            .is("effective_to", null)
+            .maybeSingle();
+          if (cancelled) return;
+          if (assignmentError || !assignment) {
+            setError("You don't have a current department assignment yet — ask your administrator.");
+            setLoading(false);
+            return;
+          }
+          department = assignment.department as Department;
         }
 
         const { data: created, error: createError } = await supabase
@@ -139,7 +148,7 @@ export function TimesheetForm({ userId }: { userId: string }) {
           .insert({
             staff_id: userId,
             location: profile.location,
-            department: assignment.department,
+            department,
             month: viewMonth,
             year: viewYear,
             status: "draft",
