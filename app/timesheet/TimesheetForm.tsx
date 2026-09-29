@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AttendanceGrid } from "@/components/AttendanceGrid";
 import { StatusPill } from "@/components/StatusPill";
 import { fetchPendingFinalApprovers } from "@/lib/pendingApprovers";
+import { fetchAppToday } from "@/lib/appToday";
 import { leadershipDepartment } from "@/lib/ownTimesheetDepartment";
 import {
   type ApprovalType,
@@ -16,6 +17,7 @@ import {
   daysInMonth,
   dateKey,
   monthLabel,
+  unfilledDays,
 } from "@/lib/timesheet";
 
 type Timesheet = {
@@ -56,6 +58,9 @@ export function TimesheetForm({ userId }: { userId: string }) {
   const [fullName, setFullName] = useState("");
   const [timesheet, setTimesheet] = useState<Timesheet | null>(null);
   const [entries, setEntries] = useState<Record<string, AttendanceStatus>>({});
+  // Today's date key as the database sees it (see lib/appToday.ts). Days
+  // after it can't be entered — the database rejects them.
+  const [today, setToday] = useState<string | null>(null);
   // date key -> holiday name(s), national and organisation scope merged.
   const [holidays, setHolidays] = useState<Record<string, string>>({});
   // Only meaningful when timesheet.status === 'returning': null once the
@@ -197,6 +202,9 @@ export function TimesheetForm({ userId }: { userId: string }) {
       }
       const holidayMap = Object.fromEntries(Object.entries(holidayNames).map(([d, names]) => [d, names.join(" / ")]));
 
+      const serverToday = await fetchAppToday(supabase);
+      if (cancelled) return;
+
       let recipient: string | null = null;
       if (current.status === "returning") {
         const { data: recipientId, error: recipientError } = await supabase.rpc(
@@ -226,16 +234,21 @@ export function TimesheetForm({ userId }: { userId: string }) {
         (attendance ?? []).map((row) => [row.date, row.status as AttendanceStatus]),
       );
       // Suggest PH on holidays the staff member hasn't filled in — but only
-      // while the sheet is actually editable, and never over a day they (or
-      // an earlier save) already set. It is a starting value, not a lock:
-      // it isn't saved until they save, and they can change it.
+      // while the sheet is actually editable, never over a day they (or an
+      // earlier save) already set, and NEVER for a day that hasn't arrived:
+      // a future-dated row would make the database reject the whole
+      // save-draft batch (attendance_entries takes no date after today). An
+      // upcoming holiday is suggested on a later visit, once its day is here.
+      // It is a starting value, not a lock: it isn't saved until they save,
+      // and they can change it.
       const editableNow =
         current.status === "draft" || (current.status === "returning" && recipient === null);
       if (editableNow) {
         for (const date of Object.keys(holidayMap)) {
-          if (!(date in loaded)) loaded[date] = "public_holiday";
+          if (!(date in loaded) && date <= serverToday) loaded[date] = "public_holiday";
         }
       }
+      setToday(serverToday);
       setHolidays(holidayMap);
       setEntries(loaded);
       setReturnRecipient(recipient);
@@ -256,7 +269,32 @@ export function TimesheetForm({ userId }: { userId: string }) {
   const editable =
     timesheet?.status === "draft" || (timesheet?.status === "returning" && returnRecipient === null);
   const totalDays = daysInMonth(viewYear, viewMonth);
-  const filledDays = Object.keys(entries).length;
+  const unfilled = today ? unfilledDays(viewYear, viewMonth, entries, today) : null;
+  // One timesheet per staff per month, and it locks on submission — so it can
+  // only be submitted once every day, including the last, has been filled in.
+  // The database enforces that (missing_attendance_days); this just says why
+  // the button is unavailable instead of letting it fail.
+  const canSubmit = unfilled !== null && unfilled.fillableNow === 0 && unfilled.stillToCome === 0;
+  const lastDayLabel = `${totalDays} ${new Date(viewYear, viewMonth - 1, 1).toLocaleDateString("en-US", { month: "long" })}`;
+  const submitBlockedReason = (() => {
+    if (!unfilled || canSubmit) return null;
+    const { fillableNow, stillToCome } = unfilled;
+    const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+    if (fillableNow > 0 && stillToCome > 0) {
+      return `Fill in the ${days(fillableNow)} still empty up to today. The month can be submitted once every day is filled in — that's from ${lastDayLabel}, its last day.`;
+    }
+    if (fillableNow > 0) return `Fill in the ${days(fillableNow)} still empty before submitting.`;
+    return `You can submit once the month is complete — from ${lastDayLabel}, when its last day can be filled in. Days after today open up one at a time.`;
+  })();
+
+  // Only days that have arrived are ever sent. A row already stored with a
+  // future date (a sheet pre-filled before the rule existed) is left as it is:
+  // re-sending it would make the database reject the entire batch.
+  function savableRows(timesheetId: string) {
+    return Object.entries(entries)
+      .filter(([date]) => today === null || date <= today)
+      .map(([date, status]) => ({ timesheet_id: timesheetId, date, status }));
+  }
 
   function setDay(day: number, status: AttendanceStatus) {
     setEntries((prev) => ({ ...prev, [dateKey(viewYear, viewMonth, day)]: status }));
@@ -268,15 +306,12 @@ export function TimesheetForm({ userId }: { userId: string }) {
     setError(null);
     setNotice(null);
 
-    const rows = Object.entries(entries).map(([date, status]) => ({
-      timesheet_id: timesheet.id,
-      date,
-      status,
-    }));
+    const rows = savableRows(timesheet.id);
 
-    const { error: upsertError } = await supabase
-      .from("attendance_entries")
-      .upsert(rows, { onConflict: "timesheet_id,date" });
+    const { error: upsertError } =
+      rows.length === 0
+        ? { error: null }
+        : await supabase.from("attendance_entries").upsert(rows, { onConflict: "timesheet_id,date" });
 
     setSaving(false);
     if (upsertError) {
@@ -288,8 +323,8 @@ export function TimesheetForm({ userId }: { userId: string }) {
 
   async function handleSubmit() {
     if (!timesheet) return;
-    if (filledDays < totalDays) {
-      setError(`Fill in all ${totalDays} days before submitting — ${totalDays - filledDays} remaining.`);
+    if (!canSubmit) {
+      setError(submitBlockedReason ?? "This timesheet can't be submitted yet.");
       return;
     }
 
@@ -297,14 +332,11 @@ export function TimesheetForm({ userId }: { userId: string }) {
     setError(null);
     setNotice(null);
 
-    const rows = Object.entries(entries).map(([date, status]) => ({
-      timesheet_id: timesheet.id,
-      date,
-      status,
-    }));
-    const { error: upsertError } = await supabase
-      .from("attendance_entries")
-      .upsert(rows, { onConflict: "timesheet_id,date" });
+    const rows = savableRows(timesheet.id);
+    const { error: upsertError } =
+      rows.length === 0
+        ? { error: null }
+        : await supabase.from("attendance_entries").upsert(rows, { onConflict: "timesheet_id,date" });
     if (upsertError) {
       setSubmitting(false);
       setError("Couldn't save your entries before submitting.");
@@ -438,10 +470,17 @@ export function TimesheetForm({ userId }: { userId: string }) {
         editable={editable}
         onChange={setDay}
         holidays={holidays}
+        today={today ?? undefined}
       />
 
       {error && <p className="text-sm text-returning">{error}</p>}
       {notice && <p className="text-sm text-approved">{notice}</p>}
+
+      {editable && submitBlockedReason && (
+        <p id="submit-hint" className="text-sm text-text-secondary">
+          {submitBlockedReason}
+        </p>
+      )}
 
       {editable && (
         <div className="flex gap-3">
@@ -456,7 +495,8 @@ export function TimesheetForm({ userId }: { userId: string }) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={saving || submitting}
+            disabled={saving || submitting || !canSubmit}
+            aria-describedby={submitBlockedReason ? "submit-hint" : undefined}
             className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-on-accent disabled:opacity-60"
           >
             {submitting

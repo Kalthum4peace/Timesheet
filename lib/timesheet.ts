@@ -117,6 +117,34 @@ export function dateKey(year: number, month: number, day: number) {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+// Date keys are zero-padded YYYY-MM-DD, so plain string comparison is date
+// comparison. A day is "not yet available" when it is after today.
+export function isAfterToday(key: string, today: string) {
+  return key > today;
+}
+
+// How many days of the month still have no entry, split by whether the
+// staff member can fill them in right now. Submission needs BOTH to be zero:
+// a timesheet is one row per staff per month and locks once submitted, so it
+// can only be submitted once its last day has been filled in — which is why
+// "days still to come" is reported separately from "days you can fill now".
+export function unfilledDays(
+  year: number,
+  month: number,
+  entries: Record<string, unknown>,
+  today: string,
+): { fillableNow: number; stillToCome: number } {
+  let fillableNow = 0;
+  let stillToCome = 0;
+  for (let day = 1; day <= daysInMonth(year, month); day++) {
+    const key = dateKey(year, month, day);
+    if (key in entries) continue;
+    if (isAfterToday(key, today)) stillToCome++;
+    else fillableNow++;
+  }
+  return { fillableNow, stillToCome };
+}
+
 export function leadingBlanksForMonth(year: number, month: number) {
   return (new Date(year, month - 1, 1).getDay() + 6) % 7;
 }
